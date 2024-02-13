@@ -11,7 +11,7 @@ This class is meant for simple network tasks.
 
 Install using Swift Package Manager
 
-```
+```swift
 dependencies: [
     .package(url: "https://github.com/0xWDG/SimpleNetworking.git", .branch("main")),
 ],
