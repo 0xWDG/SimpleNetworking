@@ -2,29 +2,56 @@
 
 This class is meant for simple network tasks.
 
-## Declare networking variable
+## Requirements
+
+- Swift 5.9+ (Xcode 15+)
+- iOS 13+, macOS 10.15+
+
+## Installation
+
+Install using Swift Package Manager
+
+```
+dependencies: [
+    .package(url: "https://github.com/0xWDG/SimpleNetworking.git", .branch("main")),
+],
+targets: [
+    .target(name: "MyTarget", dependencies: [
+        .product(name: "SimpleNetworking", package: "SimpleNetworking"),
+    ]),
+]
+```
+
+And import it:
+```swift
+import SimpleNetworking
+```
+
+## Usage
+
+### Declare networking variable
 ```swift
 import SimpleNetworking
 
 let networking = SimpleNetworking.shared
 ```
 
-## Setup (optional)
+### Setup (optional)
 ```swift
 networking.set(serverURL: "https://wesleydegroot.nl")
 ```
 
-## Set user-agent (optional)
+### Set user-agent (optional)
 ```swift
 networking.set(userAgent: "STRING")
 ```
 
-## Set authentication (optional)
+### Set authentication (optional)
 ```swift
 networking.set(authorization: "STRING")
 ```
 
-## GET data Async/Await
+### GET data Async/Await
 ```swift
 import SimpleNetworking
 
@@ -38,7 +65,7 @@ Task {
 }
 ```
 
-## POST data Async/Await
+### POST data Async/Await
 ```swift
 import SimpleNetworking
 
@@ -57,7 +84,7 @@ Task {
 }
 ```
 
-## GET data (closure based)
+### GET data (closure based)
 ```swift
 import SimpleNetworking
 
@@ -69,7 +96,7 @@ networking.request(
 }
 ```
 
-## POST data (closure based)
+### POST data (closure based)
 ```swift
 import SimpleNetworking
 
@@ -86,8 +113,8 @@ networking.request(
 }
 ```
 
-## Bonus 1: JSON Decoding
-### Codable, decoding strategy = useDefaultKeys
+### Bonus 1: JSON Decoding
+#### Codable, decoding strategy = useDefaultKeys
 ```swift
 struct MyCodable: Codable {
     let value1: String
@@ -98,7 +125,7 @@ struct MyCodable: Codable {
 let data: MyCodable? = networkResponse.decoded()
 ```
 
-### Codable, decoding strategy = convertFromSnakeCase
+#### Codable, decoding strategy = convertFromSnakeCase
 ```swift
 struct MyCodable: Codable {
     let snakeCase: String
@@ -109,7 +136,7 @@ struct MyCodable: Codable {
 let data: MyCodable? = networkResponse.decoded(.convertFromSnakeCase)
 ```
 
-## Bonus: Websocket
+### Bonus: Websocket
 ```swift
 import SimpleNetworking
 
@@ -118,7 +145,7 @@ SimpleNetworking.shared.connect(to: "https://api.github.com/users/0xWDG") { data
 }
 ```
 
-## Add HTTP Cookie
+### Add HTTP Cookie
 ```swift
 let cookie = HTTPCookie.init(properties: [
     .name: "my cookie",
@@ -130,7 +157,7 @@ let cookie = HTTPCookie.init(properties: [
 SimpleNetworking.shared.add(cookie: "cookie")
 ```
 
-# Contact
+## Contact
 
 We can get in touch via [Twitter/X](https://twitter.com/0xWDG), [Discord](https://discordapp.com/users/918438083861573692), [Mastodon](https://iosdev.space/@0xWDG), [Threads](http://threads.net/@0xwdg), [Bluesky](https://bsky.app/profile/0xwdg.bsky.social).
 
