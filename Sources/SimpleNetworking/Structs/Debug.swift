@@ -14,18 +14,18 @@ extension SimpleNetworking {
     /// Debug parameters
     public struct Debug {
         /// Debug: NSURLRequest
-        var requestURL: Bool = false
+        public var requestURL: Bool = false
         /// Debug: sent HTTP Headers
-        var requestHeaders: Bool = false
+        public var requestHeaders: Bool = false
         /// Debug: sent Cookies
-        var requestCookies: Bool = false
+        public var requestCookies: Bool = false
         /// Debug: sent Body
-        var requestBody: Bool = false
+        public var requestBody: Bool = false
         /// Debug: received HTTP Headers
-        var responseHeaders: Bool = false
+        public var responseHeaders: Bool = false
         /// Debug: received Body
-        var responseBody: Bool = false
+        public var responseBody: Bool = false
         /// Debug: received JSON (if any)
-        var responseJSON: Bool = false
+        public var responseJSON: Bool = false
     }
 }

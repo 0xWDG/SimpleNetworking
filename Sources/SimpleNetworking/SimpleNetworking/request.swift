@@ -39,17 +39,12 @@ extension SimpleNetworking {
         request.httpMethod = method.method
 
         switch method {
-        case .delete(let data):
-            parseMethodData(data: data, request: &request)
-
-        case .post(let data):
-            parseMethodData(data: data, request: &request)
-
-        case .put(let data):
-            parseMethodData(data: data, request: &request)
+        case .delete(let data), .post(let data), .put(let data):
+            request.setValue(getContentType(), forHTTPHeaderField: "Content-Type")
+            request.httpBody = createHTTPBody(with: data)
 
         case .get:
-            _ = ""
+            request.setValue(getContentType(), forHTTPHeaderField: "Content-Type")
         }
 
         return await exec(with: request, file: file, line: line, function: function)
@@ -88,17 +83,12 @@ extension SimpleNetworking {
         request.httpMethod = method.method
 
         switch method {
-        case .delete(let data):
-            parseMethodData(data: data, request: &request)
-
-        case .post(let data):
-            parseMethodData(data: data, request: &request)
-
-        case .put(let data):
-            parseMethodData(data: data, request: &request)
+        case .delete(let data), .post(let data), .put(let data):
+            request.setValue(getContentType(), forHTTPHeaderField: "Content-Type")
+            request.httpBody = createHTTPBody(with: data)
 
         case .get:
-            _ = ""
+            request.setValue(getContentType(), forHTTPHeaderField: "Content-Type")
         }
 
         exec(with: request, completionHandler: { response in
@@ -129,17 +119,5 @@ extension SimpleNetworking {
         }
 
         return request
-    }
-
-    internal func parseMethodData(data: Any?, request: inout URLRequest) {
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        if let contents = data as? [String: Codable] {
-            request.httpBody = try? JSONSerialization.data(withJSONObject: contents)
-        }
-
-        if let contents = data as? Codable {
-            request.httpBody = try? JSONEncoder().encode(contents)
-        }
     }
 }

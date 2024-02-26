@@ -51,6 +51,11 @@ networking.set(userAgent: "STRING")
 networking.set(authorization: "STRING")
 ```
 
+### Set post type (optional)
+```swift
+networking.set(postType: .json) // .plain, .json, .graphQL
+```
+
 ### GET data Async/Await
 ```swift
 import SimpleNetworking
@@ -155,6 +160,25 @@ let cookie = HTTPCookie.init(properties: [
 ])
 
 SimpleNetworking.shared.add(cookie: "cookie")
+```
+
+### Debugging
+```swift
+
+/// Debug: NSURLRequest
+SimpleNetworking.shared.debug.requestURL = false
+/// Debug: sent HTTP Headers
+SimpleNetworking.shared.requestHeaders = false
+/// Debug: sent Cookies
+SimpleNetworking.shared.requestCookies = false
+/// Debug: sent Body
+SimpleNetworking.shared.requestBody = false
+/// Debug: received HTTP Headers
+SimpleNetworking.shared.responseHeaders = false
+/// Debug: received Body
+SimpleNetworking.shared.responseBody = false
+/// Debug: received JSON (if any)
+SimpleNetworking.shared.responseJSON = false
 ```
 
 ## Contact

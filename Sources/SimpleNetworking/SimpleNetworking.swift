@@ -36,6 +36,9 @@ open class SimpleNetworking {
     /// Custom authorization token
     internal var authToken: String?
 
+    /// Post Type
+    internal var postType: POSTType = .json
+
     /// custom session
     internal var session: URLSession? = URLSession(configuration: .ephemeral)
 
@@ -71,6 +74,13 @@ open class SimpleNetworking {
     public func set(authorization: String) {
         self.authToken = authorization
     }
+
+    /// Set the post type
+    /// - Parameter postType: post type
+    public func set(postType: POSTType) {
+        self.postType = postType
+    }
+
 
     /// Add a cookie to the storage
     /// - Parameter add: cookie
