@@ -168,17 +168,17 @@ SimpleNetworking.shared.add(cookie: "cookie")
 /// Debug: NSURLRequest
 SimpleNetworking.shared.debug.requestURL = false
 /// Debug: sent HTTP Headers
-SimpleNetworking.shared.requestHeaders = false
+SimpleNetworking.shared.debug.requestHeaders = false
 /// Debug: sent Cookies
-SimpleNetworking.shared.requestCookies = false
+SimpleNetworking.shared.debug.requestCookies = false
 /// Debug: sent Body
-SimpleNetworking.shared.requestBody = false
+SimpleNetworking.shared.debug.requestBody = false
 /// Debug: received HTTP Headers
-SimpleNetworking.shared.responseHeaders = false
+SimpleNetworking.shared.debug.responseHeaders = false
 /// Debug: received Body
-SimpleNetworking.shared.responseBody = false
+SimpleNetworking.shared.debug.responseBody = false
 /// Debug: received JSON (if any)
-SimpleNetworking.shared.responseJSON = false
+SimpleNetworking.shared.debug.responseJSON = false
 ```
 
 ## Contact
