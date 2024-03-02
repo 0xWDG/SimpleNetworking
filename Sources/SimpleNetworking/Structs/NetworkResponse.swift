@@ -38,7 +38,7 @@ extension SimpleNetworking {
         public var request: URLRequest
 
         /// Decode to an Codable type
-        /// - Parameter to: to Codable
+        /// - Parameter strategy: decoding strategy
         /// - Returns: T
         public func decoded<T: Codable>(
             strategy: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys,

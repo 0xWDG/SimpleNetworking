@@ -29,12 +29,16 @@ import SimpleNetworking
 
 ## Usage
 
-### Declare networking variable
+### Declare networking variable (preferred)
 ```swift
 import SimpleNetworking
 
 let networking = SimpleNetworking.shared
 ```
+We use `networking` as the variable name, but you can use any name you like.
+Please note in the examples below we use `networking` as the variable name.
+If you use a different name, please replace `networking` with your variable name.
+Or use `SimpleNetworking.shared` instead of `networking`.
 
 ### Setup (optional)
 ```swift
@@ -58,8 +62,6 @@ networking.set(postType: .json) // .plain, .json, .graphQL
 
 ### GET data Async/Await
 ```swift
-import SimpleNetworking
-
 Task {
     let response = await networking.request(
         path: "/", 
@@ -72,8 +74,6 @@ Task {
 
 ### POST data Async/Await
 ```swift
-import SimpleNetworking
-
 Task {
     let response = await networking.request(
         path: "/", 
@@ -91,8 +91,6 @@ Task {
 
 ### GET data (closure based)
 ```swift
-import SimpleNetworking
-
 networking.request(
     path: "/", 
     method: .get
@@ -103,8 +101,6 @@ networking.request(
 
 ### POST data (closure based)
 ```swift
-import SimpleNetworking
-
 networking.request(
     path: "/",
     method: .post(
@@ -145,7 +141,7 @@ let data: MyCodable? = networkResponse.decoded(.convertFromSnakeCase)
 ```swift
 import SimpleNetworking
 
-SimpleNetworking.shared.connect(to: "https://api.github.com/users/0xWDG") { data in
+networking.connect(to: "https://api.github.com/users/0xWDG") { data in
     print(data)
 }
 ```
@@ -159,26 +155,45 @@ let cookie = HTTPCookie.init(properties: [
     .path: "/"
 ])
 
-SimpleNetworking.shared.add(cookie: "cookie")
+networking.add(cookie: "cookie")
 ```
 
+### Mocking
+SimpleNetworking can be mocked (since version 1.0.3), so you can test your code without actually making a network request.
+
+```swift
+
+networking.set(mockData: [
+    "https://wesleydegroot.nl": .init(
+        data: "OVERRIDE", // Can be Data or String
+        response: .init( // NSURLResponse, Can be nil
+            url: .init(stringLiteral: "https://wesleydegroot.nl"), 
+            mimeType: "text/html", 
+            expectedContentLength: 8, 
+            textEncodingName: "utf-8"
+        ),
+        statusCode: 200, // Int: If omitted, 200 is used
+        error: nil
+    )
+])
+```
 ### Debugging
 ```swift
 
 /// Debug: NSURLRequest
-SimpleNetworking.shared.debug.requestURL = false
+networking.debug.requestURL = false
 /// Debug: sent HTTP Headers
-SimpleNetworking.shared.debug.requestHeaders = false
+networking.debug.requestHeaders = false
 /// Debug: sent Cookies
-SimpleNetworking.shared.debug.requestCookies = false
+networking.debug.requestCookies = false
 /// Debug: sent Body
-SimpleNetworking.shared.debug.requestBody = false
+networking.debug.requestBody = false
 /// Debug: received HTTP Headers
-SimpleNetworking.shared.debug.responseHeaders = false
+networking.debug.responseHeaders = false
 /// Debug: received Body
-SimpleNetworking.shared.debug.responseBody = false
+networking.debug.responseBody = false
 /// Debug: received JSON (if any)
-SimpleNetworking.shared.debug.responseJSON = false
+networking.debug.responseJSON = false
 ```
 
 ## Contact

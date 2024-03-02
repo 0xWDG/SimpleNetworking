@@ -54,6 +54,9 @@ open class SimpleNetworking {
     /// Default URL
     internal let defaultURL = URL(string: "https://wesleydegroot.nl")! // swiftlint:disable:this force_unwrapping
 
+    /// Mock data
+    internal var mockData = [String: SNMock]()
+
     /// Debug values
     public var debug: Debug = .init()
 
@@ -81,6 +84,17 @@ open class SimpleNetworking {
         self.postType = postType
     }
 
+    /// Set the session
+    /// - Parameter session: session
+    public func set(session: URLSession) {
+        self.session = session
+    }
+    
+    /// Set mock url data
+    /// - Parameter mock: Mock request.
+    public func set(mockData: [String: SNMock]) {
+        self.mockData = mockData
+    }
 
     /// Add a cookie to the storage
     /// - Parameter add: cookie

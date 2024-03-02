@@ -16,6 +16,25 @@ extension SimpleNetworking {
         file: String = #file,
         line: Int = #line,
         function: String = #function) async -> NetworkResponse {
+            if let url = request.url,
+               let mock = mockData[url.absoluteString] {
+                let data = mock.data ?? .init()
+
+                return .init(
+                    response: mock.response,
+                    statuscode: mock.statusCode,
+                    error: mock.error,
+                    data: mock.data,
+                    string: String(data: data, encoding: .utf8),
+                    json: try? JSONSerialization.jsonObject(
+                        with: data,
+                        options: []
+                    ) as? [String: Any],
+                    cookies: nil,
+                    request: request
+                )
+            }
+
             if let cookies = SimpleNetworking.cookies {
                 for cookieData in cookies {
                     // _FIXME: Can crash??
@@ -68,6 +87,27 @@ extension SimpleNetworking {
         file: String = #file,
         line: Int = #line,
         function: String = #function) {
+            if let url = request.url,
+               let mock = mockData[url.absoluteString] {
+                let data = mock.data ?? .init()
+
+                completionHandler(
+                    .init(
+                        response: mock.response,
+                        statuscode: mock.statusCode,
+                        error: mock.error,
+                        data: mock.data,
+                        string: String(data: data, encoding: .utf8),
+                        json: try? JSONSerialization.jsonObject(
+                            with: data,
+                            options: []
+                        ) as? [String: Any],
+                        cookies: nil,
+                        request: request
+                    )
+                )
+            }
+
             DispatchQueue.global(qos: .userInitiated).async {
                 if let cookies = SimpleNetworking.cookies {
                     for cookieData in cookies {
