@@ -155,7 +155,7 @@ let cookie = HTTPCookie.init(properties: [
     .path: "/"
 ])
 
-networking.add(cookie: "cookie")
+networking.add(cookie: cookie)
 ```
 
 ### Mocking
@@ -182,16 +182,22 @@ networking.set(mockData: [
 
 /// Debug: NSURLRequest
 networking.debug.requestURL = false
+
 /// Debug: sent HTTP Headers
 networking.debug.requestHeaders = false
+
 /// Debug: sent Cookies
 networking.debug.requestCookies = false
+
 /// Debug: sent Body
 networking.debug.requestBody = false
+
 /// Debug: received HTTP Headers
 networking.debug.responseHeaders = false
+
 /// Debug: received Body
 networking.debug.responseBody = false
+
 /// Debug: received JSON (if any)
 networking.debug.responseJSON = false
 ```
