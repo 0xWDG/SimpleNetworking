@@ -93,7 +93,15 @@ open class SimpleNetworking {
     /// Set mock url data
     /// - Parameter mock: Mock request.
     public func set(mockData: [String: SNMock]) {
-        self.mockData = mockData
+        var newMockData: [String: SNMock] = [:]
+
+        for (url, mock) in mockData {
+            if let validURL = isURL(url) {
+                newMockData[validURL.absoluteString] = mock
+            }
+        }
+
+        self.mockData = newMockData
     }
 
     /// Add a cookie to the storage

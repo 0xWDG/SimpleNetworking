@@ -174,9 +174,21 @@ networking.set(mockData: [
         ),
         statusCode: 200, // Int: If omitted, 200 is used
         error: nil
+    ),
+    "/only/an/path": .init(
+        data: "OVERRIDE", // Can be Data or String
+        response: .init( // NSURLResponse, Can be nil
+            url: .init(stringLiteral: "https://wesleydegroot.nl/only/an/path"), 
+            mimeType: "text/html", 
+            expectedContentLength: 8, 
+            textEncodingName: "utf-8"
+        ),
+        statusCode: 200, // Int: If omitted, 200 is used
+        error: nil
     )
 ])
 ```
+
 ### Debugging
 ```swift
 
