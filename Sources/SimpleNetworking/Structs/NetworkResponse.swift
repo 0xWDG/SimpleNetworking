@@ -36,6 +36,43 @@ extension SimpleNetworking {
 
         /// Request
         public var request: URLRequest
+        
+        /// Request as cURL command.
+        public var cURL: String {
+            let cURL = "curl"
+            let method = "-X \(request.httpMethod ?? "GET")"
+            let url = request.url.flatMap { "--url '\($0.absoluteString)'" }
+            var cookieString: String? = nil
+            let header = request.allHTTPHeaderFields?
+                .map { "-H '\($0): \($1)'" }
+                .joined(separator: " ")
+
+
+            if let cookies = cookies,
+               let cookieValue = HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] {
+                cookieString = "-H 'Cookie: \(cookieValue)'"
+            }
+
+            let data: String?
+            if let httpBody = request.httpBody, !httpBody.isEmpty {
+                if let bodyString = String(data: httpBody, encoding: .utf8) { // json and plain text
+                    let escaped = bodyString
+                        .replacingOccurrences(of: "'", with: "'\\''")
+                    data = "--data '\(escaped)'"
+                } else { // Binary data
+                    let hexString = httpBody
+                        .map { String(format: "%02X", $0) }
+                        .joined()
+                    data = #"--data "$(echo '\#(hexString)' | xxd -p -r)""#
+                }
+            } else {
+                data = nil
+            }
+
+            return [cURL, method, url, header, cookieString, data]
+                .compactMap { $0 }
+                .joined(separator: " ")
+        }
 
         /// Decode to an Codable type
         /// - Parameter strategy: decoding strategy
@@ -56,7 +93,7 @@ extension SimpleNetworking {
                 decoder.keyDecodingStrategy = strategy
                 return try decoder.decode(T.self, from: data)
             } catch {
-                print("\(file):\(line) \(function):\r\n Decoding error", error)
+                print("\(file):\(line) \(function):\r\nDecoding error", error)
                 return nil
             }
         }

@@ -13,6 +13,7 @@ import Foundation
 extension SimpleNetworking {
     /// Networking error (generator)
     public struct NetworkingError: Error {
+        /// Error message
         let message: String
 
         /// Initialize networking error

@@ -13,6 +13,9 @@ import Foundation
 
 extension SimpleNetworking {
     /// httpBody Method for internal use
+    ///
+    /// - Parameter value: Value in `[String: Codable]`, `Codable` or Plain text
+    /// - Returns: Encoded data
     func createHTTPBody(with value: Any?) -> Data? {
         switch self.postType {
         case .json:

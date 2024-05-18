@@ -14,8 +14,6 @@ import Foundation
 ///
 /// This class is ment for simple networking tasks.
 ///
-/// it contains no fancy functions.
-///
 /// [https://github.com/0xWDG/SimpleNetworking](https://github.com/0xWDG/SimpleNetworking)
 open class SimpleNetworking {
     /// Shared instance

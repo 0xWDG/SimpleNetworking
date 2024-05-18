@@ -11,6 +11,13 @@
 import Foundation
 
 extension SimpleNetworking {
+    /// Execute request
+    /// - Parameters:
+    ///   - request: URL Request
+    ///   - file: Caller's filename
+    ///   - line: Caller's line number
+    ///   - function: Caller's function name
+    /// - Returns: ``NetworkResponse``
     internal func exec(
         with request: URLRequest,
         file: String = #file,
@@ -81,6 +88,13 @@ extension SimpleNetworking {
             }
         }
 
+    /// Execute request (legacy, non-async)
+    /// - Parameters:
+    ///   - request: URL Request
+    ///   - file: Caller's filename
+    ///   - line: Caller's line number
+    ///   - function: Caller's function name
+    /// - Returns: ``NetworkResponse``
     internal func exec(
         with request: URLRequest,
         completionHandler: @escaping (NetworkResponse) -> Void,

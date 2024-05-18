@@ -21,7 +21,8 @@ extension SimpleNetworking {
         WSSocket?.resume()
         readMessage()
     }
-
+    
+    /// Read message from websocket
     private func readMessage() {
         WSSocket?.receive { result in
             do {

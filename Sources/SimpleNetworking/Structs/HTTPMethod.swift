@@ -15,16 +15,19 @@ extension SimpleNetworking {
     public enum HTTPMethod {
         /// HTTP GET
         case get
+
         /// HTTP PUT
         ///
         /// - parameters:
         ///   - value: A value to put
         case put(Any?)
+
         /// HTTP POST
         ///
         /// - parameters:
         ///   - value: A value to post
         case post(Any?)
+
         /// HTTP DELETE
         ///
         /// - parameters:
@@ -32,6 +35,9 @@ extension SimpleNetworking {
         case delete(Any?)
 
         /// Method for internal use
+        ///
+        /// Method used for the HTTP Request.
+        /// This can be `GET`, `PUT`, `POST`, `DELETE`.
         var method: String {
             switch self {
             case .get:
