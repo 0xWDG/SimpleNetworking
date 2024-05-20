@@ -6,7 +6,7 @@ final class SimpleNetworkingTests: XCTestCase {
 
     func testSetup() {
         networking.set(serverURL: "https://wesleydegroot.nl")
-        networking.set(postType: .json) // .plain, .json, .graphQL
+        networking.set(encoding: .json) // .plain, .json, .graphQL
     }
 
     func testSimpleHTTPCall() async {

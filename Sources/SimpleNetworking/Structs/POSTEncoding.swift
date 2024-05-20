@@ -19,6 +19,9 @@ extension SimpleNetworking {
     /// - `plain` for Plain text (eg own encoder).
     /// - `graphQL` for graphQL (JSON)
     public enum POSTEncoding {
+        /// Automatic typing (json)
+        case auto
+
         /// The type for JSON based posts.
         case json
 

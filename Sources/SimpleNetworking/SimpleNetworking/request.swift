@@ -21,7 +21,7 @@ extension SimpleNetworking {
     public func request(
         path: String,
         method: HTTPMethod,
-        postType: POSTEncoding = .json,
+        encoding: POSTEncoding = .auto,
         file: String = #file,
         line: Int = #line,
         function: String = #function
@@ -41,8 +41,8 @@ extension SimpleNetworking {
 
         switch method {
         case .delete(let data), .post(let data), .put(let data):
-            request.setValue(getContentType(postType: postType), forHTTPHeaderField: "Content-Type")
-            request.httpBody = createHTTPBody(with: data, postType: postType)
+            request.setValue(getContentType(postType: encoding), forHTTPHeaderField: "Content-Type")
+            request.httpBody = createHTTPBody(with: data, postType: encoding)
 
         case .get:
             break
@@ -62,7 +62,7 @@ extension SimpleNetworking {
     public func request(
         path: String,
         method: HTTPMethod,
-        postType: POSTEncoding = .json,
+        encoding: POSTEncoding = .auto,
         completionHandler: @escaping (NetworkResponse) -> Void,
         file: String = #file,
         line: Int = #line,
@@ -86,11 +86,11 @@ extension SimpleNetworking {
 
         switch method {
         case .delete(let data), .post(let data), .put(let data):
-            request.setValue(getContentType(postType: postType), forHTTPHeaderField: "Content-Type")
-            request.httpBody = createHTTPBody(with: data, postType: postType)
+            request.setValue(getContentType(postType: encoding), forHTTPHeaderField: "Content-Type")
+            request.httpBody = createHTTPBody(with: data, postType: encoding)
 
         case .get:
-            request.setValue(getContentType(postType: postType), forHTTPHeaderField: "Content-Type")
+            break
         }
 
         exec(with: request, completionHandler: { response in

@@ -35,7 +35,7 @@ open class SimpleNetworking {
     internal var authToken: String?
 
     /// Post Type
-    internal var postType: POSTEncoding = .json
+    internal var postEncoding: POSTEncoding = .json
 
     /// custom session
     internal var session: URLSession? = URLSession(configuration: .ephemeral)
@@ -77,9 +77,9 @@ open class SimpleNetworking {
     }
 
     /// Set the post type
-    /// - Parameter postType: post type
-    public func set(postType: POSTEncoding) {
-        self.postType = postType
+    /// - Parameter encoding: post encoding
+    public func set(encoding: POSTEncoding) {
+        self.postEncoding = encoding
     }
 
     /// Set the session
