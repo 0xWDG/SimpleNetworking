@@ -54,17 +54,9 @@ extension SimpleNetworking {
 
             let data: String?
             if let httpBody = request.httpBody, !httpBody.isEmpty {
-                // swiftlint:disable:next non_optional_string_data_conversion
-                if let bodyString = String(data: httpBody, encoding: .utf8) {
-                    let escaped = bodyString
-                        .replacingOccurrences(of: "'", with: "'\\''")
-                    data = "--data '\(escaped)'"
-                } else { // Binary data
-                    let hexString = httpBody
-                        .map { String(format: "%02X", $0) }
-                        .joined()
-                    data = #"--data "$(echo '\#(hexString)' | xxd -p -r)""#
-                }
+                let bodyString = String(decoding: httpBody, as: UTF8.self)
+                    .replacingOccurrences(of: "'", with: "'\\''")
+                data = "--data '\(bodyString)'"
             } else {
                 data = nil
             }
