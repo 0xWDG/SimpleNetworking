@@ -10,6 +10,11 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+// Support network calls in Linux.
+import FoundationNetworking
+#endif
+
 extension SimpleNetworking {
     /// _Asynchronous function_ Creates a network request that retrieves the contents of a URL \
     /// based on the specified URL request object, and calls a handler upon completion.

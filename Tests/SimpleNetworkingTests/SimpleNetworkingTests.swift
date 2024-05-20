@@ -1,6 +1,11 @@
 import XCTest
 @testable import SimpleNetworking
 
+#if canImport(FoundationNetworking)
+// Support network calls in Linux.
+import FoundationNetworking
+#endif
+
 final class SimpleNetworkingTests: XCTestCase {
     let networking = SimpleNetworking.shared
 
