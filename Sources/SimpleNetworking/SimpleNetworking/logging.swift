@@ -10,7 +10,6 @@
 
 import Foundation
 
-
 extension SimpleNetworking {
     internal func networkLog(request: URLRequest?,
                              session: URLSession?,

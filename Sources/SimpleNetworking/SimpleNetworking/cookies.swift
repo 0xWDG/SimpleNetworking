@@ -10,7 +10,6 @@
 
 import Foundation
 
-
 extension SimpleNetworking {
     /// Create and add a cookie to the storage
     /// - Parameters:

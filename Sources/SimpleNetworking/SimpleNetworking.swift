@@ -10,7 +10,6 @@
 
 import Foundation
 
-
 /// Simple Networking
 ///
 /// This class is ment for simple networking tasks.
