@@ -10,11 +10,6 @@
 
 import Foundation
 
-#if canImport(FoundationNetworking)
-// Support network calls in Linux.
-import FoundationNetworking
-#endif
-
 extension SimpleNetworking {
     /// Network response
     public struct NetworkResponse {

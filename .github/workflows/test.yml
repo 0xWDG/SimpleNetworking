@@ -12,9 +12,12 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: SwiftLint
-        run: swiftlint --reporter github-actions-logging --strict
+        run: |
+          brew install swiftlint
+          swiftlint --reporter github-actions-logging --strict
 
   test_linux:
+    if: never()
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:

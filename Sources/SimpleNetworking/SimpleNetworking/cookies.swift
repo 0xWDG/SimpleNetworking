@@ -10,10 +10,6 @@
 
 import Foundation
 
-#if canImport(FoundationNetworking)
-// Support network calls in Linux.
-import FoundationNetworking
-#endif
 
 extension SimpleNetworking {
     /// Create and add a cookie to the storage
