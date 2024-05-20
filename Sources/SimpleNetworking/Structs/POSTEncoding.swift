@@ -1,5 +1,5 @@
 //
-//  PostEncoding.swift
+//  POSTEncoding.swift
 //  Simple Networking
 //
 //  Created by Wesley de Groot on 26/02/2024.

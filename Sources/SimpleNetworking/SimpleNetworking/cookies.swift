@@ -17,7 +17,7 @@ extension SimpleNetworking {
     ///   - path: cookie path
     ///   - name: cookie name
     ///   - value: cookie value
-    public func cookie(domain: String, path: String, name: String, value: String) {
+    @discardableResult public func cookie(domain: String, path: String, name: String, value: String) -> Bool {
         if let cookie = HTTPCookie(properties: [
             .domain: domain,
             .path: path,
@@ -25,8 +25,9 @@ extension SimpleNetworking {
             .value: value
         ]) {
             SimpleNetworking.cookies?.append(cookie)
+            return true
         } else {
-            print("Failed to create cookie \(name)")
+            return false
         }
     }
 
@@ -40,7 +41,6 @@ extension SimpleNetworking {
         var newCookieStorage: [HTTPCookie] = []
 
         guard let cookies = SimpleNetworking.cookies else {
-            print("No cookies.")
             return
         }
 
@@ -61,7 +61,8 @@ extension SimpleNetworking {
     public func cookie(reset: Bool) {
         if reset {
             SimpleNetworking.cookies?.removeAll()
-            print("Cookie storage contains \(String(describing: SimpleNetworking.cookies?.count)) cookies.")
+
+            assert((SimpleNetworking.cookies ?? []).isEmpty, "Failed to reset cookie storage.")
         }
     }
 }

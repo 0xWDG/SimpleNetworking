@@ -36,17 +36,16 @@ extension SimpleNetworking {
 
         /// Request
         public var request: URLRequest
-        
+
         /// Request as cURL command.
         public var cURL: String {
             let cURL = "curl"
             let method = "-X \(request.httpMethod ?? "GET")"
             let url = request.url.flatMap { "--url '\($0.absoluteString)'" }
-            var cookieString: String? = nil
+            var cookieString: String?
             let header = request.allHTTPHeaderFields?
                 .map { "-H '\($0): \($1)'" }
                 .joined(separator: " ")
-
 
             if let cookies = cookies,
                let cookieValue = HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] {
@@ -55,7 +54,8 @@ extension SimpleNetworking {
 
             let data: String?
             if let httpBody = request.httpBody, !httpBody.isEmpty {
-                if let bodyString = String(data: httpBody, encoding: .utf8) { // json and plain text
+                // swiftlint:disable:next non_optional_string_data_conversion
+                if let bodyString = String(data: httpBody, encoding: .utf8) {
                     let escaped = bodyString
                         .replacingOccurrences(of: "'", with: "'\\''")
                     data = "--data '\(escaped)'"

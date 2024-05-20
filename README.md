@@ -23,6 +23,7 @@ targets: [
 ```
 
 And import it:
+
 ```swift
 import SimpleNetworking
 ```
@@ -30,41 +31,48 @@ import SimpleNetworking
 ## Usage
 
 ### Declare networking variable (preferred)
+
 ```swift
 import SimpleNetworking
 
 let networking = SimpleNetworking.shared
 ```
+
 We use `networking` as the variable name, but you can use any name you like.
 Please note in the examples below we use `networking` as the variable name.
 If you use a different name, please replace `networking` with your variable name.
 Or use `SimpleNetworking.shared` instead of `networking`.
 
 ### Setup (optional)
+
 ```swift
 networking.set(serverURL: "https://wesleydegroot.nl")
 ```
 
 ### Set user-agent (optional)
+
 ```swift
 networking.set(userAgent: "STRING")
 ```
 
 ### Set authentication (optional)
+
 ```swift
 networking.set(authorization: "STRING")
 ```
 
 ### Set post type (optional)
+
 ```swift
 networking.set(postType: .json) // .plain, .json, .graphQL
 ```
 
 ### GET data Async/Await
+
 ```swift
 Task {
     let response = await networking.request(
-        path: "/", 
+        path: "/",
         method: .get
     )
 
@@ -73,10 +81,11 @@ Task {
 ```
 
 ### POST data Async/Await
+
 ```swift
 Task {
     let response = await networking.request(
-        path: "/", 
+        path: "/",
         method: .post(
             [
                 "postfield1": "poststring1",
@@ -90,9 +99,10 @@ Task {
 ```
 
 ### GET data (closure based)
+
 ```swift
 networking.request(
-    path: "/", 
+    path: "/",
     method: .get
 ) { networkResponse in
     print(networkResponse)
@@ -100,6 +110,7 @@ networking.request(
 ```
 
 ### POST data (closure based)
+
 ```swift
 networking.request(
     path: "/",
@@ -115,7 +126,9 @@ networking.request(
 ```
 
 ### Bonus 1: JSON Decoding
+
 #### Codable, decoding strategy = useDefaultKeys
+
 ```swift
 struct MyCodable: Codable {
     let value1: String
@@ -127,6 +140,7 @@ let data: MyCodable? = networkResponse.decoded()
 ```
 
 #### Codable, decoding strategy = convertFromSnakeCase
+
 ```swift
 struct MyCodable: Codable {
     let snakeCase: String
@@ -138,6 +152,7 @@ let data: MyCodable? = networkResponse.decoded(.convertFromSnakeCase)
 ```
 
 ### Bonus: Websocket
+
 ```swift
 import SimpleNetworking
 
@@ -147,6 +162,7 @@ networking.connect(to: "https://api.github.com/users/0xWDG") { data in
 ```
 
 ### Add HTTP Cookie
+
 ```swift
 let cookie = HTTPCookie.init(properties: [
     .name: "my cookie",
@@ -159,6 +175,7 @@ networking.add(cookie: cookie)
 ```
 
 ### Mocking
+
 SimpleNetworking can be mocked (since version 1.0.3), so you can test your code without actually making a network request.
 
 ```swift
@@ -167,9 +184,9 @@ networking.set(mockData: [
     "https://wesleydegroot.nl": .init(
         data: "OVERRIDE", // Can be Data or String
         response: .init( // NSURLResponse, Can be nil
-            url: .init(stringLiteral: "https://wesleydegroot.nl"), 
-            mimeType: "text/html", 
-            expectedContentLength: 8, 
+            url: .init(string: "https://wesleydegroot.nl")!,
+            mimeType: "text/html",
+            expectedContentLength: 8,
             textEncodingName: "utf-8"
         ),
         statusCode: 200, // Int: If omitted, 200 is used
@@ -178,9 +195,9 @@ networking.set(mockData: [
     "/only/an/path": .init(
         data: "OVERRIDE", // Can be Data or String
         response: .init( // NSURLResponse, Can be nil
-            url: .init(stringLiteral: "https://wesleydegroot.nl/only/an/path"), 
-            mimeType: "text/html", 
-            expectedContentLength: 8, 
+            url: .init(string: "https://wesleydegroot.nl/only/an/path")!,
+            mimeType: "text/html",
+            expectedContentLength: 8,
             textEncodingName: "utf-8"
         ),
         statusCode: 200, // Int: If omitted, 200 is used
@@ -190,6 +207,7 @@ networking.set(mockData: [
 ```
 
 ### Debugging
+
 ```swift
 
 /// Debug: NSURLRequest

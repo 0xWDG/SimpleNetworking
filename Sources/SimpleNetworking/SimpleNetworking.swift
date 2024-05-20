@@ -35,7 +35,7 @@ open class SimpleNetworking {
     internal var authToken: String?
 
     /// Post Type
-    internal var postType: POSTType = .json
+    internal var postType: POSTEncoding = .json
 
     /// custom session
     internal var session: URLSession? = URLSession(configuration: .ephemeral)
@@ -78,7 +78,7 @@ open class SimpleNetworking {
 
     /// Set the post type
     /// - Parameter postType: post type
-    public func set(postType: POSTType) {
+    public func set(postType: POSTEncoding) {
         self.postType = postType
     }
 
@@ -87,7 +87,7 @@ open class SimpleNetworking {
     public func set(session: URLSession) {
         self.session = session
     }
-    
+
     /// Set mock url data
     /// - Parameter mock: Mock request.
     public func set(mockData: [String: SNMock]) {

@@ -16,8 +16,8 @@ extension SimpleNetworking {
     ///
     /// - Parameter value: Value in `[String: Codable]`, `Codable` or Plain text
     /// - Returns: Encoded data
-    func createHTTPBody(with value: Any?) -> Data? {
-        switch self.postType {
+    func createHTTPBody(with value: Any?, postType: POSTEncoding = .json) -> Data? {
+        switch postType {
         case .json:
             if let contents = value as? [String: Codable] {
                 return try? JSONSerialization.data(withJSONObject: contents)
@@ -72,7 +72,7 @@ extension SimpleNetworking {
     }
 
     /// Content-Type Header for internal use
-    func getContentType() -> String {
+    func getContentType(postType: POSTEncoding = .json) -> String {
         switch postType {
         case .plain:
             return "application/x-www-form-urlencoded"

@@ -32,11 +32,8 @@ extension SimpleNetworking {
                     statuscode: mock.statusCode,
                     error: mock.error,
                     data: mock.data,
-                    string: String(data: data, encoding: .utf8),
-                    json: try? JSONSerialization.jsonObject(
-                        with: data,
-                        options: []
-                    ) as? [String: Any],
+                    string: String(decoding: data, as: UTF8.self),
+                    json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: nil,
                     request: request
                 )
@@ -58,7 +55,7 @@ extension SimpleNetworking {
 
                 // Save our cookies
                 SimpleNetworking.cookies = session.configuration.httpCookieStorage?.cookies
-                SimpleNetworking.fullResponse = String(data: data, encoding: .utf8)
+                SimpleNetworking.fullResponse = String(decoding: data, as: UTF8.self)
 
                 networkLog(
                     request: request, session: session, response: response, data: data,
@@ -75,11 +72,8 @@ extension SimpleNetworking {
                     statuscode: httpCode,
                     error: nil,
                     data: data,
-                    string: String(data: data, encoding: .utf8),
-                    json: try? JSONSerialization.jsonObject(
-                        with: data,
-                        options: []
-                    ) as? [String: Any],
+                    string: String(decoding: data, as: UTF8.self),
+                    json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: session.configuration.httpCookieStorage?.cookies,
                     request: request
                 )
@@ -105,27 +99,21 @@ extension SimpleNetworking {
                let mock = mockData[url.absoluteString] {
                 let data = mock.data ?? .init()
 
-                completionHandler(
-                    .init(
-                        response: mock.response,
-                        statuscode: mock.statusCode,
-                        error: mock.error,
-                        data: mock.data,
-                        string: String(data: data, encoding: .utf8),
-                        json: try? JSONSerialization.jsonObject(
-                            with: data,
-                            options: []
-                        ) as? [String: Any],
-                        cookies: nil,
-                        request: request
-                    )
-                )
+                completionHandler(.init(
+                    response: mock.response,
+                    statuscode: mock.statusCode,
+                    error: mock.error,
+                    data: mock.data,
+                    string: String(decoding: data, as: UTF8.self),
+                    json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                    cookies: nil,
+                    request: request
+                ))
             }
 
             DispatchQueue.global(qos: .userInitiated).async {
                 if let cookies = SimpleNetworking.cookies {
                     for cookieData in cookies {
-                        // _FIXME: Can crash??
                         self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
                     }
                 }
@@ -140,7 +128,7 @@ extension SimpleNetworking {
 
                     // Save our cookies
                     SimpleNetworking.cookies = session?.configuration.httpCookieStorage?.cookies
-                    SimpleNetworking.fullResponse = String(data: sitedata, encoding: .utf8)
+                    SimpleNetworking.fullResponse = String(decoding: sitedata, as: UTF8.self)
 
                     self.networkLog(
                         request: request, session: session, response: response, data: sitedata,
@@ -152,21 +140,16 @@ extension SimpleNetworking {
                         httpCode = httpResponse.statusCode
                     }
 
-                    completionHandler(
-                        .init(
-                            response: response,
-                            statuscode: httpCode,
-                            error: taskError,
-                            data: sitedata,
-                            string: String(data: sitedata, encoding: .utf8),
-                            json: try? JSONSerialization.jsonObject(
-                                with: sitedata,
-                                options: []
-                            ) as? [String: Any],
-                            cookies: session?.configuration.httpCookieStorage?.cookies,
-                            request: request
-                        )
-                    )
+                    completionHandler(.init(
+                        response: response,
+                        statuscode: httpCode,
+                        error: taskError,
+                        data: sitedata,
+                        string: String(decoding: sitedata, as: UTF8.self),
+                        json: try? JSONSerialization.jsonObject(with: sitedata, options: []) as? [String: Any],
+                        cookies: session?.configuration.httpCookieStorage?.cookies,
+                        request: request
+                    ))
                 }.resume()
             }
         }
