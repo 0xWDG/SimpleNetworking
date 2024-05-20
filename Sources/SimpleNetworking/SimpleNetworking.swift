@@ -10,6 +10,11 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+// Support network calls in Linux.
+import FoundationNetworking
+#endif
+
 /// Simple Networking
 ///
 /// This class is ment for simple networking tasks.
