@@ -17,7 +17,7 @@ jobs:
           swiftlint --reporter github-actions-logging --strict
 
   test_linux:
-    if: never()
+    if: false
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
