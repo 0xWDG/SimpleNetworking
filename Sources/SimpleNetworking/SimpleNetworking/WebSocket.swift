@@ -48,9 +48,7 @@ extension SimpleNetworking {
             if self.WSConnectionTries < 10 {
                 self.readMessage()
             } else {
-                if let data = "FAILED TO CONNECT".data(using: .utf8) {
-                    self.WSResponder?(data)
-                }
+                self.WSResponder?(Data("FAILED TO CONNECT".utf8))
             }
         }
 

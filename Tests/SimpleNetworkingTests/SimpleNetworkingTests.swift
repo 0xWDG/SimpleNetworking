@@ -23,7 +23,7 @@ final class SimpleNetworkingTests: XCTestCase {
             "https://wesleydegroot.nl/": .init(
                 data: "OVERRIDE",
                 response: .init(
-                    url: .init(string: "https://wesleydegroot.nl/")!,
+                    url: .init(string: "https://wesleydegroot.nl/")!, // swiftlint:disable:this force_unwrapping
                     mimeType: "text/html",
                     expectedContentLength: 8,
                     textEncodingName: "utf-8"
