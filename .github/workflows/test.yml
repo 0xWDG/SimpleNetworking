@@ -1,8 +1,7 @@
 name: Update Contributors List
 on:
+  # Run on push to main branch
   push:
-    branches:
-      - main
   # Dispatch if triggered using Github (website)
   workflow_dispatch:
 
