@@ -1,0 +1,35 @@
+name: Run Swiftlint + Tests
+on:
+  # Run on push to main branch
+  push:
+  # Dispatch if triggered using Github (website)
+  workflow_dispatch:
+
+jobs:
+  swiftlint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: SwiftLint
+        run: |
+          brew install swiftlint
+          swiftlint --reporter github-actions-logging --strict
+
+  test_linux:
+    if: false
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Swift test
+        run: swift test
+
+  test_macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Swift test
+        run: swift test

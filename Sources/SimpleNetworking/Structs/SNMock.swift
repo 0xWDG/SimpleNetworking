@@ -20,7 +20,7 @@ public struct SNMock {
 
     /// Mocked Error (if any)
     public let error: Error?
-    
+
     /// Initialize a mocked HTTP Response
     /// - Parameters:
     ///   - data: Mocked HTTP Response data
@@ -32,7 +32,7 @@ public struct SNMock {
         self.response = response
         self.error = error
     }
-    
+
     /// Initialize a mocked HTTP Response
     /// - Parameters:
     ///   - data: Mocked HTTP Response data

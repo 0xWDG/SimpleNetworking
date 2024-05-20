@@ -66,9 +66,8 @@ extension SimpleNetworking {
         }
         if debug.requestBody {
             print("\n  Body:")
-            if let httpBody = request.httpBody,
-               let body = String(data: httpBody, encoding: .utf8) {
-                print("    \(body)")
+            if let httpBody = request.httpBody {
+                print("    \(String(decoding: httpBody, as: UTF8.self))")
             }
         }
     }
@@ -82,34 +81,28 @@ extension SimpleNetworking {
     }
 
     internal func networkLogData(data: Data) {
-        if let stringData = String(data: data, encoding: .utf8) {
-            if debug.responseBody {
-                print("\n  Body:")
-                for line in stringData.split(separator: "\n") {
-                    print("    \(line)")
-                }
-            }
+        let stringData = String(decoding: data, as: UTF8.self)
 
-            if debug.responseJSON {
-                print("\n  Decoded JSON:")
-                if let dictionary = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    for (key, value) in dictionary {
-                        print("    \(key): \"\(value)\"")
-                    }
-                } else {
-                    print("    Unable to parse JSON")
+        if debug.responseBody {
+            print("\n  Body:")
+            for line in stringData.split(separator: "\n") {
+                print("    \(line)")
+            }
+        }
+
+        if debug.responseJSON {
+            print("\n  Decoded JSON:")
+            if let dictionary = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                for (key, value) in dictionary {
+                    print("    \(key): \"\(value)\"")
                 }
+            } else {
+                print("    Unable to parse JSON")
             }
         }
     }
 
     internal func handleNetworkError(data: Data) -> String {
-        if let errorData = String(data: data, encoding: .utf8) {
-            for line in errorData.split(separator: "\n") {
-                return String(line)
-            }
-        }
-
-        return ""
+        return String(decoding: data, as: UTF8.self)
     }
 }
