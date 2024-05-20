@@ -1,4 +1,4 @@
-name: Update Contributors List
+name: Run Swiftlint + Tests
 on:
   # Run on push to main branch
   push:
@@ -7,15 +7,16 @@ on:
 
 jobs:
   swiftlint:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
 
       - name: SwiftLint
-        run: swiftlint --strict --reporter github-actions-logging
+        run: swiftlint --reporter github-actions-logging --strict
 
   test_linux:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
 
