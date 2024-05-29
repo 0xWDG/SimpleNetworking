@@ -29,6 +29,12 @@ extension SimpleNetworking {
 
     /// Read message from websocket
     private func readMessage() {
+#if !canImport(FoundationNetworking)
+        // It looks like it's not supported on Linux (*yet)
+        // error: extra trailing closure passed in call
+        //        WSSocket?.receive { result in
+        //                          ^~~~~~~~~~~
+
         WSSocket?.receive { result in
             do {
                 let message = try result.get()
@@ -58,5 +64,6 @@ extension SimpleNetworking {
         }
 
         WSConnectionTries += 1
+#endif
     }
 }

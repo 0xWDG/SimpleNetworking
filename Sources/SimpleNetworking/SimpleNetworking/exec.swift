@@ -23,11 +23,23 @@ extension SimpleNetworking {
     ///   - line: Caller's line number
     ///   - function: Caller's function name
     /// - Returns: ``NetworkResponse``
-    internal func exec(
+    internal func exec( // swiftlint:disable:this function_body_length
         with request: URLRequest,
         file: String = #file,
         line: Int = #line,
         function: String = #function) async -> NetworkResponse {
+            #if canImport(FoundationNetworking)
+            // Linux support.
+            do {
+                return try await withCheckedThrowingContinuation { continuation in
+                    exec(with: request, completionHandler: { response in
+                        continuation.resume(returning: response)
+                    }, file: file, line: line, function: function)
+                }
+            } catch {
+                return .init(error: error, request: request)
+            }
+            #else
             if let url = request.url,
                let mock = mockData[url.absoluteString] {
                 let data = mock.data ?? .init()
@@ -46,7 +58,6 @@ extension SimpleNetworking {
 
             if let cookies = SimpleNetworking.cookies {
                 for cookieData in cookies {
-                    // _FIXME: Can crash??
                     self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
                 }
             }
@@ -85,6 +96,7 @@ extension SimpleNetworking {
             } catch {
                 return .init(error: error, request: request)
             }
+            #endif
         }
 
     /// Execute request (legacy, non-async)
