@@ -7,6 +7,11 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+// Support network calls in Linux.
+import FoundationNetworking
+#endif
+
 /// Simple Networking Mock
 public struct SNMock {
     /// Mocked HTTP Response data
