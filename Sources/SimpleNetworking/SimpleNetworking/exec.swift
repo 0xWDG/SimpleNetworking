@@ -35,8 +35,7 @@ extension SimpleNetworking {
                     continuation.resume(returning: response)
                 }, file: file, line: line, function: function)
             }
-            #endif
-
+            #else
             if let url = request.url,
                let mock = mockData[url.absoluteString] {
                 let data = mock.data ?? .init()
@@ -94,6 +93,7 @@ extension SimpleNetworking {
             } catch {
                 return .init(error: error, request: request)
             }
+            #endif
         }
 
     /// Execute request (legacy, non-async)
