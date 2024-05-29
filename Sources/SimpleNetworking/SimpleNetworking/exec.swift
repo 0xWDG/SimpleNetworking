@@ -30,10 +30,14 @@ extension SimpleNetworking {
         function: String = #function) async -> NetworkResponse {
             #if canImport(FoundationNetworking)
             // Linux support.
-            return await withCheckedThrowingContinuation { continuation in
-                exec(with: request, completionHandler: { response in
-                    continuation.resume(returning: response)
-                }, file: file, line: line, function: function)
+            do {
+                return await withCheckedThrowingContinuation { continuation in
+                    exec(with: request, completionHandler: { response in
+                        continuation.resume(returning: response)
+                    }, file: file, line: line, function: function)
+                }
+            } catch {
+                return .init(error: error, request: request)
             }
             #else
             if let url = request.url,
