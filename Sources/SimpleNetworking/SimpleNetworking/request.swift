@@ -40,7 +40,7 @@ extension SimpleNetworking {
         request.httpMethod = method.method
 
         switch method {
-        case .delete(let data), .post(let data), .put(let data):
+        case .delete(let data), .post(let data), .patch(let data), .put(let data):
             request.setValue(getContentType(postType: encoding), forHTTPHeaderField: "Content-Type")
             request.httpBody = createHTTPBody(with: data, postType: encoding)
 
@@ -85,7 +85,7 @@ extension SimpleNetworking {
         request.httpMethod = method.method
 
         switch method {
-        case .delete(let data), .post(let data), .put(let data):
+        case .delete(let data), .post(let data), .patch(let data), .put(let data):
             request.setValue(getContentType(postType: encoding), forHTTPHeaderField: "Content-Type")
             request.httpBody = createHTTPBody(with: data, postType: encoding)
 
