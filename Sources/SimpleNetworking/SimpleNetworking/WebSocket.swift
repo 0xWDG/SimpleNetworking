@@ -28,7 +28,7 @@ extension SimpleNetworking {
     }
 
     /// Read message from websocket
-    private func readMessage() {
+    private func readMessage() { // swiftlint:disable:this function_body_length
 #if !canImport(FoundationNetworking)
         // It looks like it's not supported on Linux (*yet)
         // error: extra trailing closure passed in call
