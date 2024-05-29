@@ -31,7 +31,7 @@ extension SimpleNetworking {
             #if canImport(FoundationNetworking)
             // Linux support.
             do {
-                return await withCheckedThrowingContinuation { continuation in
+                return try await withCheckedThrowingContinuation { continuation in
                     exec(with: request, completionHandler: { response in
                         continuation.resume(returning: response)
                     }, file: file, line: line, function: function)
