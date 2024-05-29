@@ -21,6 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Envorionment
+        run: swift --version
+
       - name: Swift test
         run: swift test
 
