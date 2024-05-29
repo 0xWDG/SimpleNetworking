@@ -23,7 +23,7 @@ extension SimpleNetworking {
     ///   - line: Caller's line number
     ///   - function: Caller's function name
     /// - Returns: ``NetworkResponse``
-    internal func exec(
+    internal func exec( // swiftlint:disable:this function_body_length
         with request: URLRequest,
         file: String = #file,
         line: Int = #line,
@@ -58,7 +58,6 @@ extension SimpleNetworking {
 
             if let cookies = SimpleNetworking.cookies {
                 for cookieData in cookies {
-                    // _FIXME: Can crash??
                     self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
                 }
             }
