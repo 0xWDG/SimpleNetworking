@@ -2,10 +2,12 @@
 
 This class is meant for simple network tasks.
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2F0xWDG%2FSimpleNetworking%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/0xWDG/SimpleNetworking) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2F0xWDG%2FSimpleNetworking%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/0xWDG/SimpleNetworking)
+
 ## Requirements
 
 - Swift 5.9+ (Xcode 15+)
-- iOS 13+, macOS 10.15+
+- iOS 13+, macOS 10.15+, tvOS, watchOS, Linux
 
 ## Installation
 
