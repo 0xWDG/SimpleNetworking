@@ -10,6 +10,11 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+// Support network calls in Linux.
+import FoundationNetworking
+#endif
+
 extension SimpleNetworking {
     /// Connect to a websocket
     /// - Parameters:
