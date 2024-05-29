@@ -28,6 +28,15 @@ extension SimpleNetworking {
         file: String = #file,
         line: Int = #line,
         function: String = #function) async -> NetworkResponse {
+            #if canImport(FoundationNetworking)
+            // Linux support.
+            return await withCheckedThrowingContinuation { continuation in
+                exec(with: request, completionHandler: { response in
+                    continuation.resume(returning: response)
+                }, file: file, line: line, function: function)
+            }
+            #endif
+
             if let url = request.url,
                let mock = mockData[url.absoluteString] {
                 let data = mock.data ?? .init()
