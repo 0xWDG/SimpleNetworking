@@ -1,4 +1,4 @@
-# Simple networking
+# Simple Networking
 
 This class is meant for simple network tasks.
 
