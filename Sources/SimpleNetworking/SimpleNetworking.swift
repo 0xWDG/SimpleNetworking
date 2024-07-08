@@ -110,12 +110,12 @@ open class SimpleNetworking: @unchecked Sendable {
     /// Add a cookie to the storage
     /// - Parameter add: cookie
     public func cookie(add: HTTPCookie) {
-        SimpleNetworking.cookies?.append(add)
+        cookies?.append(add)
     }
 
     /// Return the full networkRequestResponse
     /// - Returns: the full networkRequestResponse
     public func networkRequestResponse() -> String? {
-        return SimpleNetworking.fullResponse
+        return fullResponse
     }
 }

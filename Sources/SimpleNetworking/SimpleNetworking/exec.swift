@@ -56,7 +56,7 @@ extension SimpleNetworking {
                 )
             }
 
-            if let cookies = cookies {
+            if let cookies = self.cookies {
                 for cookieData in cookies {
                     self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
                 }
@@ -129,7 +129,7 @@ extension SimpleNetworking {
             }
 
             DispatchQueue.global(qos: .userInitiated).async {
-                if let cookies = cookies {
+                if let cookies = self.cookies {
                     for cookieData in cookies {
                         self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
                     }
