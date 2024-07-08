@@ -12,7 +12,7 @@ import Foundation
 
 #if canImport(FoundationNetworking)
 // Support network calls in Linux.
-import FoundationNetworking
+@preconcurrency import FoundationNetworking
 #endif
 
 extension SimpleNetworking {
