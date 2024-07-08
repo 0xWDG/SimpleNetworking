@@ -25,10 +25,10 @@ open class SimpleNetworking: @unchecked Sendable {
     public static let shared = SimpleNetworking()
 
     /// All the cookies
-    nonisolated(unsafe) public static var cookies: [HTTPCookie]? = []
+    public var cookies: [HTTPCookie]? = []
 
     /// the full networkRequestResponse
-    nonisolated(unsafe) public static var fullResponse: String? = ""
+    public var fullResponse: String? = ""
 
     /// URL Prefix
     internal var serverURL: String = ""
