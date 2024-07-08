@@ -12,7 +12,7 @@ import Foundation
 
 #if canImport(FoundationNetworking)
 // Support network calls in Linux.
-import FoundationNetworking
+@preconcurrency import FoundationNetworking
 #endif
 
 extension SimpleNetworking {
@@ -56,7 +56,7 @@ extension SimpleNetworking {
                 )
             }
 
-            if let cookies = SimpleNetworking.cookies {
+            if let cookies = self.cookies {
                 for cookieData in cookies {
                     self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
                 }
@@ -70,8 +70,8 @@ extension SimpleNetworking {
                 let (data, response) = try await session.data(for: request)
 
                 // Save our cookies
-                SimpleNetworking.cookies = session.configuration.httpCookieStorage?.cookies
-                SimpleNetworking.fullResponse = String(decoding: data, as: UTF8.self)
+                cookies = session.configuration.httpCookieStorage?.cookies
+                fullResponse = String(decoding: data, as: UTF8.self)
 
                 networkLog(
                     request: request, session: session, response: response, data: data,
@@ -108,7 +108,7 @@ extension SimpleNetworking {
     /// - Returns: ``NetworkResponse``
     internal func exec(
         with request: URLRequest,
-        completionHandler: @escaping (NetworkResponse) -> Void,
+        completionHandler: @escaping @Sendable (NetworkResponse) -> Void,
         file: String = #file,
         line: Int = #line,
         function: String = #function) {
@@ -129,7 +129,7 @@ extension SimpleNetworking {
             }
 
             DispatchQueue.global(qos: .userInitiated).async {
-                if let cookies = SimpleNetworking.cookies {
+                if let cookies = self.cookies {
                     for cookieData in cookies {
                         self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
                     }
@@ -144,8 +144,8 @@ extension SimpleNetworking {
                     }
 
                     // Save our cookies
-                    SimpleNetworking.cookies = session?.configuration.httpCookieStorage?.cookies
-                    SimpleNetworking.fullResponse = String(decoding: sitedata, as: UTF8.self)
+                    cookies = session?.configuration.httpCookieStorage?.cookies
+                    fullResponse = String(decoding: sitedata, as: UTF8.self)
 
                     self.networkLog(
                         request: request, session: session, response: response, data: sitedata,

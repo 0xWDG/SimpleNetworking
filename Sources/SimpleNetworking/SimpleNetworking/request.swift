@@ -68,7 +68,7 @@ extension SimpleNetworking {
         path: String,
         method: HTTPMethod,
         encoding: POSTEncoding = .auto,
-        completionHandler: @escaping (NetworkResponse) -> Void,
+        completionHandler: @escaping @Sendable (NetworkResponse) -> Void,
         file: String = #file,
         line: Int = #line,
         function: String = #function

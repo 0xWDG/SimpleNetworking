@@ -29,7 +29,7 @@ extension SimpleNetworking {
             .name: name,
             .value: value
         ]) {
-            SimpleNetworking.cookies?.append(cookie)
+            cookies?.append(cookie)
             return true
         } else {
             return false
@@ -45,11 +45,11 @@ extension SimpleNetworking {
     public func cookie(deleteCookieWithDomain: String?, path: String?, name: String?, value: String?) {
         var newCookieStorage: [HTTPCookie] = []
 
-        guard let cookies = SimpleNetworking.cookies else {
+        guard let unwrapped = cookies else {
             return
         }
 
-        for cookie in cookies where ![
+        for cookie in unwrapped where ![
         cookie.domain == deleteCookieWithDomain,
         cookie.path == path,
         cookie.name == name,
@@ -58,16 +58,16 @@ extension SimpleNetworking {
             newCookieStorage.append(cookie)
         }
 
-        SimpleNetworking.cookies = newCookieStorage
+        cookies = newCookieStorage
     }
 
     /// Reset cookie storage
     /// - Parameter reset: reset
     public func cookie(reset: Bool) {
         if reset {
-            SimpleNetworking.cookies?.removeAll()
+            cookies?.removeAll()
 
-            assert((SimpleNetworking.cookies ?? []).isEmpty, "Failed to reset cookie storage.")
+            assert((cookies ?? []).isEmpty, "Failed to reset cookie storage.")
         }
     }
 }
