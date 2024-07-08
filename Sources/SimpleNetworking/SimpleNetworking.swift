@@ -20,15 +20,15 @@ import FoundationNetworking
 /// This class is ment for simple networking tasks.
 ///
 /// [https://github.com/0xWDG/SimpleNetworking](https://github.com/0xWDG/SimpleNetworking)
-open class SimpleNetworking {
+open class SimpleNetworking: @unchecked Sendable {
     /// Shared instance
     public static let shared = SimpleNetworking()
 
     /// All the cookies
-    public static var cookies: [HTTPCookie]? = []
+    nonisolated(unsafe) public static var cookies: [HTTPCookie]? = []
 
     /// the full networkRequestResponse
-    public static var fullResponse: String? = ""
+    nonisolated(unsafe) public static var fullResponse: String? = ""
 
     /// URL Prefix
     internal var serverURL: String = ""

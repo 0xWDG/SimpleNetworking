@@ -108,7 +108,7 @@ extension SimpleNetworking {
     /// - Returns: ``NetworkResponse``
     internal func exec(
         with request: URLRequest,
-        completionHandler: @escaping (NetworkResponse) -> Void,
+        completionHandler: @escaping @Sendable (NetworkResponse) -> Void,
         file: String = #file,
         line: Int = #line,
         function: String = #function) {
