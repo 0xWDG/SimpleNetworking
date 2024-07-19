@@ -9,4 +9,6 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Swift build (watchOS)
-        run: xcrun xcodebuild clean build -quiet -scheme DynamicUI -destination generic/platform=watchOS
+        run: |
+          PRODUCT_NAME=`cat Package.swift | grep -m1 "name" | awk -F'"' '{print $2}'`
+          xcrun xcodebuild clean build -quiet -scheme "$PRODUCT_NAME" -destination generic/platform=watchOS
