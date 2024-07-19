@@ -3,10 +3,8 @@
 name: Build-Packages
 
 on:
-  # Run on push to main branch
-  push:
-    branches:
-      - main
+  # Run on pull_request
+  pull_request:
 
   # Dispatch if triggered using Github (website)
   workflow_dispatch:
