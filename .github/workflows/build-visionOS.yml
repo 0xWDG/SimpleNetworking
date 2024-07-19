@@ -1,0 +1,14 @@
+name: Build for visionOS
+on:
+  pull_request:
+
+jobs:
+  build_visionOS:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Swift build (visionOS)
+        run: |
+          PRODUCT_NAME=`cat Package.swift | grep -m1 "name" | awk -F'"' '{print $2}'`
+          xcrun xcodebuild clean build -quiet -scheme "$PRODUCT_NAME" -destination generic/platform=xrOS
