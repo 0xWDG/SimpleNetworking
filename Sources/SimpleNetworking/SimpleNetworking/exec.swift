@@ -28,18 +28,6 @@ extension SimpleNetworking {
         file: String = #file,
         line: Int = #line,
         function: String = #function) async -> NetworkResponse {
-            #if canImport(FoundationNetworking)
-            // Linux support.
-            do {
-                return try await withCheckedThrowingContinuation { continuation in
-                    exec(with: request, completionHandler: { response in
-                        continuation.resume(returning: response)
-                    }, file: file, line: line, function: function)
-                }
-            } catch {
-                return .init(error: error, request: request)
-            }
-            #else
             if let url = request.url,
                let mock = mockData[url.absoluteString] {
                 let data = mock.data ?? .init()
@@ -56,6 +44,18 @@ extension SimpleNetworking {
                 )
             }
 
+            #if canImport(FoundationNetworking)
+            // Linux support.
+            do {
+                return try await withCheckedThrowingContinuation { continuation in
+                    exec(with: request, completionHandler: { response in
+                        continuation.resume(returning: response)
+                    }, file: file, line: line, function: function)
+                }
+            } catch {
+                return .init(error: error, request: request)
+            }
+            #else
             if let cookies = self.cookies {
                 for cookieData in cookies {
                     self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
@@ -69,8 +69,11 @@ extension SimpleNetworking {
             do {
                 let (data, response) = try await session.data(for: request)
 
-                // Save our cookies
-                cookies = session.configuration.httpCookieStorage?.cookies
+                if let responseCookies = session.configuration.httpCookieStorage?.cookies {
+                    // Save our cookies
+                    cookies = responseCookies
+                }
+
                 fullResponse = String(decoding: data, as: UTF8.self)
 
                 networkLog(
