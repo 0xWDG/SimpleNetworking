@@ -37,7 +37,7 @@ extension SimpleNetworking {
                     statuscode: mock.statusCode,
                     error: mock.error,
                     data: mock.data,
-                    string: String(decoding: data, as: UTF8.self),
+                    string: String(data: data, encoding: .utf8),
                     json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: nil,
                     request: request
@@ -74,7 +74,7 @@ extension SimpleNetworking {
                     cookies = responseCookies
                 }
 
-                fullResponse = String(decoding: data, as: UTF8.self)
+                fullResponse = String(data: data, encoding: .utf8)
 
                 networkLog(
                     request: request, session: session, response: response, data: data,
@@ -91,7 +91,7 @@ extension SimpleNetworking {
                     statuscode: httpCode,
                     error: nil,
                     data: data,
-                    string: String(decoding: data, as: UTF8.self),
+                    string: String(data: data, encoding: .utf8),
                     json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: session.configuration.httpCookieStorage?.cookies,
                     request: request
@@ -124,7 +124,7 @@ extension SimpleNetworking {
                     statuscode: mock.statusCode,
                     error: mock.error,
                     data: mock.data,
-                    string: String(decoding: data, as: UTF8.self),
+                    string: String(data: data, encoding: .utf8),
                     json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: nil,
                     request: request
@@ -139,19 +139,19 @@ extension SimpleNetworking {
                 }
 
                 // Start our datatask
-                self.session?.dataTask(with: request) { [self] (sitedata, response, taskError) in
+                self.session?.dataTask(with: request) { [self] (siteData, response, taskError) in
                     // Check if we got any useable site data
-                    guard let sitedata = sitedata else {
+                    guard let siteData = siteData else {
                         completionHandler(.init(error: taskError, request: request))
                         return
                     }
 
                     // Save our cookies
                     cookies = session?.configuration.httpCookieStorage?.cookies
-                    fullResponse = String(decoding: sitedata, as: UTF8.self)
+                    fullResponse = String(data: siteData, encoding: .utf8)
 
                     self.networkLog(
-                        request: request, session: session, response: response, data: sitedata,
+                        request: request, session: session, response: response, data: siteData,
                         file: file, line: line, function: function
                     )
 
@@ -164,9 +164,9 @@ extension SimpleNetworking {
                         response: response,
                         statuscode: httpCode,
                         error: taskError,
-                        data: sitedata,
-                        string: String(decoding: sitedata, as: UTF8.self),
-                        json: try? JSONSerialization.jsonObject(with: sitedata, options: []) as? [String: Any],
+                        data: siteData,
+                        string: String(data: siteData, encoding: .utf8),
+                        json: try? JSONSerialization.jsonObject(with: siteData, options: []) as? [String: Any],
                         cookies: session?.configuration.httpCookieStorage?.cookies,
                         request: request
                     ))

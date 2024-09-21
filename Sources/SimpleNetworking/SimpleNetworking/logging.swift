@@ -71,8 +71,9 @@ extension SimpleNetworking {
         }
         if debug.requestBody {
             print("\n  Body:")
-            if let httpBody = request.httpBody {
-                print("    \(String(decoding: httpBody, as: UTF8.self))")
+            if let httpBody = request.httpBody,
+               let httpBodyString = String(data: httpBody, encoding: .utf8) {
+                print("    \(httpBodyString)")
             }
         }
     }
@@ -86,7 +87,10 @@ extension SimpleNetworking {
     }
 
     internal func networkLogData(data: Data) {
-        let stringData = String(decoding: data, as: UTF8.self)
+        guard let stringData = String(data: data, encoding: .utf8) else {
+            print("Unable to decode networkLogData")
+            return
+        }
 
         if debug.responseBody {
             print("\n  Body:")
@@ -108,6 +112,10 @@ extension SimpleNetworking {
     }
 
     internal func handleNetworkError(data: Data) -> String {
-        return String(decoding: data, as: UTF8.self)
+        if let string = String(data: data, encoding: .utf8) {
+            return string
+        } else {
+            return "Unable to parse error message"
+        }
     }
 }

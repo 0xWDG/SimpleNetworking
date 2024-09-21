@@ -58,9 +58,9 @@ extension SimpleNetworking {
             }
 
             let data: String?
-            if let httpBody = request.httpBody, !httpBody.isEmpty {
-                let bodyString = String(decoding: httpBody, as: UTF8.self)
-                    .replacingOccurrences(of: "'", with: "'\\''")
+            if let httpBody = request.httpBody, !httpBody.isEmpty,
+                var bodyString = String(data: httpBody, encoding: .utf8) {
+                bodyString = bodyString.replacingOccurrences(of: "'", with: "'\\''")
                 data = "--data '\(bodyString)'"
             } else {
                 data = nil
