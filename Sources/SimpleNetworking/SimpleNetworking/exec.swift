@@ -58,7 +58,9 @@ extension SimpleNetworking {
             #else
             if let cookies = self.cookies {
                 for cookieData in cookies {
-                    self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
+                    if let cookiestorage = self.session?.configuration.httpCookieStorage {
+                        cookiestorage.setCookie(cookieData)
+                    }
                 }
             }
 

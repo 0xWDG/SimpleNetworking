@@ -71,6 +71,36 @@ extension SimpleNetworking {
                 .joined(separator: " ")
         }
 
+        /// Request as cURL command.
+        public var asHTTPRequest: String {
+            var lines: [String] = []
+
+            lines.append("\(request.httpMethod ?? "GET") \(request.url?.relativePath ?? "/") HTTP1/1")
+            lines.append("Host: \(request.url?.host ?? "")")
+            lines.append("Connection: close")
+
+            if let headerFields = request.allHTTPHeaderFields {
+                for header in headerFields {
+                    lines.append(header.key + ": " + header.value)
+                }
+            }
+
+            if let cookies = cookies,
+               let cookieValue = HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] {
+                lines.append("Cookie: \(cookieValue)")
+            }
+
+            if let httpBody = request.httpBody, !httpBody.isEmpty,
+                var bodyString = String(data: httpBody, encoding: .utf8) {
+                bodyString = bodyString.replacingOccurrences(of: "'", with: "'\\''")
+
+                lines.append("")
+                lines.append(bodyString)
+            }
+
+            return lines.joined(separator: "\n")
+        }
+
         /// Decode to an Codable type
         /// - Parameter strategy: decoding strategy
         /// - Returns: T
