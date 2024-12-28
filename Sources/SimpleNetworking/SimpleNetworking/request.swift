@@ -46,8 +46,9 @@ extension SimpleNetworking {
 
         switch method {
         case .delete(let data), .post(let data), .patch(let data), .put(let data):
-            request.setValue(getContentType(postType: encoding), forHTTPHeaderField: "Content-Type")
-            request.httpBody = createHTTPBody(with: data, postType: encoding)
+            let newEncoding: POSTEncoding = getPostEncoding(data: data)
+            request.setValue(getContentType(postType: newEncoding), forHTTPHeaderField: "Content-Type")
+            request.httpBody = createHTTPBody(with: data, postType: newEncoding)
 
         case .get:
             break
@@ -112,6 +113,10 @@ extension SimpleNetworking {
             self.userAgent,
             forHTTPHeaderField: "User-Agent"
         )
+
+        headers?.forEach({ header in
+            request.addValue(header.value, forHTTPHeaderField: header.name)
+        })
 
         // Add the authentication token (if needed)
         if let authToken = self.authToken {

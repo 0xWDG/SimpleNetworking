@@ -74,6 +74,16 @@ extension SimpleNetworking {
         return nil
     }
 
+    // Get post encoding
+    func getPostEncoding(data: Any?) -> POSTEncoding {
+        if let string = data as? String,
+            string.contains("{") && string.contains("}") {
+            return .json
+        }
+
+        return .plain
+    }
+
     /// Content-Type Header for internal use
     func getContentType(postType: POSTEncoding = .json) -> String {
         switch postType {

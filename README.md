@@ -127,6 +127,22 @@ networking.request(
 }
 ```
 
+### networkResponse
+
+With networkResponse you can get the following data:
+- [response](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/response): URLResponse? // URLResponse
+- [statuscode](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/statuscode): Int // HTTP status code
+- [error](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/error): Error? // Error
+- [data](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/data): Data? // Received data
+- [string](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/string): String? // Received data as string
+- [dictionary](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/dictionary): [String: Any]? // Received data as dictionary (only works if data is JSON)
+- [cookies](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/cookies): [HTTPCookie]? // Received cookies
+- [request](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/request): URLRequest? // Sent request
+- [headers](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/headers): [HTTPHeader] // Received headers
+- <a href='https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/decoded(strategy:file:line:function:)'>decoded</a> -> T? // Decoded data
+- [cURL](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/cURL): String // as cURL command
+- [asHTTPRequest](https://0xwdg.github.io/SimpleNetworking/documentation/simplenetworking/simplenetworking/networkresponse/asHTTPRequest): String // as HTTP Request
+
 ### Bonus 1: JSON Decoding
 
 #### Codable, decoding strategy = useDefaultKeys
@@ -174,6 +190,17 @@ let cookie = HTTPCookie.init(properties: [
 ])
 
 networking.add(cookie: cookie)
+```
+
+### Add HTTP Header
+
+```swift
+networking.add(header: .init(name: "my header", value: "my value"))
+
+// Or if you want to declare it first
+let header = SimpleNetworking.HTTPHeader(name: "my header", value: "my value")
+
+networking.add(header: header)
 ```
 
 ### Mocking

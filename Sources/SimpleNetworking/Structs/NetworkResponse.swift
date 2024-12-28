@@ -33,8 +33,8 @@ extension SimpleNetworking {
         /// Received data as string
         public var string: String?
 
-        /// Received data as JSON
-        public var json: [String: Any]?
+        /// Received data as Dictionary (if the data is JSON)
+        public var dictionary: [String: Any]?
 
         /// Reveived cookies.
         public var cookies: [HTTPCookie]?
@@ -69,6 +69,17 @@ extension SimpleNetworking {
             return [cURL, method, url, header, cookieString, data]
                 .compactMap { $0 }
                 .joined(separator: " ")
+        }
+
+        /// Get the returned HTTP Headers
+        public var headers: [HTTPHeader] {
+            let httpURLResponse = self.response as? HTTPURLResponse
+            return httpURLResponse?.allHeaderFields.compactMap {
+                guard let key = $0.key as? String,
+                      let value = $0.value as? String else { return nil }
+
+                return HTTPHeader(name: key, value: value)
+            } ?? []
         }
 
         /// Request as cURL command.
@@ -111,7 +122,6 @@ extension SimpleNetworking {
             function: String = #function
         ) -> T? {
             guard let data = data else {
-                print("No data provided")
                 return nil
             }
 

@@ -38,7 +38,7 @@ extension SimpleNetworking {
                     error: mock.error,
                     data: mock.data,
                     string: String(data: data, encoding: .utf8),
-                    json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                    dictionary: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: nil,
                     request: request
                 )
@@ -94,7 +94,7 @@ extension SimpleNetworking {
                     error: nil,
                     data: data,
                     string: String(data: data, encoding: .utf8),
-                    json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                    dictionary: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: session.configuration.httpCookieStorage?.cookies,
                     request: request
                 )
@@ -127,7 +127,7 @@ extension SimpleNetworking {
                     error: mock.error,
                     data: mock.data,
                     string: String(data: data, encoding: .utf8),
-                    json: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                    dictionary: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: nil,
                     request: request
                 ))
@@ -168,7 +168,7 @@ extension SimpleNetworking {
                         error: taskError,
                         data: siteData,
                         string: String(data: siteData, encoding: .utf8),
-                        json: try? JSONSerialization.jsonObject(with: siteData, options: []) as? [String: Any],
+                        dictionary: try? JSONSerialization.jsonObject(with: siteData, options: []) as? [String: Any],
                         cookies: session?.configuration.httpCookieStorage?.cookies,
                         request: request
                     ))

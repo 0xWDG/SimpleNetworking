@@ -27,6 +27,9 @@ open class SimpleNetworking: @unchecked Sendable {
     /// All the cookies
     public var cookies: [HTTPCookie]? = []
 
+    /// Header
+    public var headers: [HTTPHeader]? = []
+
     /// the full networkRequestResponse
     public var fullResponse: String? = ""
 
@@ -109,8 +112,16 @@ open class SimpleNetworking: @unchecked Sendable {
 
     /// Add a cookie to the storage
     /// - Parameter add: cookie
-    public func cookie(add: HTTPCookie) {
-        cookies?.append(add)
+    public func cookie(add cookie: HTTPCookie) {
+        cookies?.removeAll(where: { $0.name == cookie.name })
+        cookies?.append(cookie)
+    }
+
+    /// Add header to request
+    /// - Parameter add: Header to be added.
+    public func headers(add header: HTTPHeader) {
+        headers?.removeAll(where: { $0.name == header.name })
+        headers?.append(header)
     }
 
     /// Return the full networkRequestResponse
