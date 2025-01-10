@@ -131,6 +131,7 @@ extension SimpleNetworking {
                 return try decoder.decode(T.self, from: data)
             } catch {
                 print("\(file):\(line) \(function):\r\nDecoding error", error)
+                print("Raw string: \"\(self.string ?? "")\".")
                 return nil
             }
         }

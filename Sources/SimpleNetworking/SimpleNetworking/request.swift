@@ -46,9 +46,8 @@ extension SimpleNetworking {
 
         switch method {
         case .delete(let data), .post(let data), .patch(let data), .put(let data):
-            let newEncoding: POSTEncoding = getPostEncoding(data: data)
-            request.setValue(getContentType(postType: newEncoding), forHTTPHeaderField: "Content-Type")
-            request.httpBody = createHTTPBody(with: data, postType: newEncoding)
+            request.setValue(getContentType(postType: encoding), forHTTPHeaderField: "Content-Type")
+            request.httpBody = createHTTPBody(with: data, postType: encoding)
 
         case .get:
             break
