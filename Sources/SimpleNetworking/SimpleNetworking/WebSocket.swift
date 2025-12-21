@@ -21,10 +21,24 @@ extension SimpleNetworking {
     ///   - socket: Websocket URL
     ///   - responder: The responder to the messages
     public func connect(to socket: URL, responder: @escaping ((Data) -> Void)) {
-        self.WSResponder = responder
+        self.onMessage = responder
         WSSocket = URLSession.shared.webSocketTask(with: socket)
         WSSocket?.resume()
         readMessage()
+    }
+
+    /// Send message to websocket
+    /// - Parameters:
+    ///   - message: The message to send
+    public func send(message: String) async throws {
+        try await WSSocket?.send(.string(message))
+    }
+
+    /// Send message to websocket
+    /// - Parameters:
+    ///   - message: The message to send
+    public func send(message: Data) async throws {
+        try await WSSocket?.send(.data(message))
     }
 
     /// Read message from websocket
@@ -42,12 +56,12 @@ extension SimpleNetworking {
                 case let .string(string):
                     self.WSConnectionTries = 0
                     if let data = string.data(using: .utf8) {
-                        self.WSResponder?(data)
+                        self.onMessage?(data)
                     }
 
                 case let .data(data):
                     self.WSConnectionTries = 0
-                    self.WSResponder?(data)
+                    self.onMessage?(data)
 
                 @unknown default:
                     self.WSConnectionTries = 0
@@ -59,7 +73,7 @@ extension SimpleNetworking {
             if self.WSConnectionTries < 10 {
                 self.readMessage()
             } else {
-                self.WSResponder?(Data("FAILED TO CONNECT".utf8))
+                self.onMessage?(Data("FAILED TO CONNECT".utf8))
             }
         }
 
