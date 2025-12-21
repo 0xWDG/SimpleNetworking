@@ -48,8 +48,20 @@ open class SimpleNetworking: @unchecked Sendable {
     /// custom session
     internal var session: URLSession? = URLSession(configuration: .ephemeral)
 
-    /// Websocket responder
-    internal var WSResponder: ((Data) -> Void)?
+    /// Streaming responder
+    internal var onOpen: (() -> Void)?
+
+    /// Streaming responder
+    internal var onMessage: ((Data) -> Void)?
+
+    /// Streaming responder
+    internal var onError: ((Error) -> Void)?
+
+    /// URLSession Data Task
+    internal var task: URLSessionDataTask?
+
+    /// EventSource session
+    internal var ESsession: URLSession?
 
     /// Websocket socket
     internal var WSSocket: URLSessionWebSocketTask?
