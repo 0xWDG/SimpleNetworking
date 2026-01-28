@@ -141,4 +141,27 @@ open class SimpleNetworking: @unchecked Sendable {
     public func networkRequestResponse() -> String? {
         return fullResponse
     }
+
+    // MARK: - Add values
+        /// Add a cookie to the storage
+    /// - Parameter add: cookie
+    public func add(cookie: HTTPCookie) {
+        cookies?.removeAll(where: { $0.name == cookie.name })
+        cookies?.append(cookie)
+    }
+
+    /// Add header to request
+    /// - Parameter add: Header to be added.
+    public func add(header: HTTPHeader) {
+        headers?.removeAll(where: { $0.name == header.name })
+        headers?.append(header)
+    }
+
+    /// Add header to request
+    /// - Parameter add: Header to be added.
+    public func add(header: String, value: String) {
+        let headerStruct = HTTPHeader(name: header, value: value)
+        headers?.removeAll(where: { $0.name == headerStruct.name })
+        headers?.append(headerStruct)
+    }
 }
