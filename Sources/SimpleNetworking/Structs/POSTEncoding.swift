@@ -18,6 +18,7 @@ extension SimpleNetworking {
     /// - `json` for JSON based posts.
     /// - `plain` for Plain text (eg own encoder).
     /// - `graphQL` for graphQL (JSON)
+    /// - `multipart` for multipart/form-data (file uploads)
     public enum POSTEncoding {
         /// Automatic typing (json)
         case auto
@@ -30,5 +31,8 @@ extension SimpleNetworking {
 
         /// The type for graphQL (JSON).
         case graphQL
+
+        /// The type for multipart/form-data (file uploads).
+        case multipart(boundary: String)
     }
 }

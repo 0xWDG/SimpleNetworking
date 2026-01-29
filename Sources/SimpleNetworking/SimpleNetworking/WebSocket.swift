@@ -15,11 +15,23 @@ import Foundation
 import FoundationNetworking
 #endif
 
+#if canImport(OSLog)
+import OSLog
+#endif
+
 extension SimpleNetworking {
+    #if canImport(OSLog)
+    /// Logger for WebSocket operations (only available on Apple platforms)
+    private static let wsLogger = Logger(
+        subsystem: "nl.wesleydegroot.SimpleNetworking",
+        category: "websocket"
+    )
+    #endif
+
     /// Connect to a websocket
     /// - Parameters:
     ///   - socket: Websocket URL
-    ///   - responder: The responder to the messages
+    ///   - responder: The handler to be called when messages are received
     public func connect(to socket: URL, responder: @escaping ((Data) -> Void)) {
         self.onMessage = responder
         WSSocket = URLSession.shared.webSocketTask(with: socket)
@@ -67,7 +79,11 @@ extension SimpleNetworking {
                     self.WSConnectionTries = 0
                 }
             } catch {
-                print("[SimpleNetworking] WebSocket Error:", error)
+                #if canImport(OSLog)
+                Self.wsLogger.error("WebSocket Error: \(error.localizedDescription)")
+                #else
+                print("[ERROR] WebSocket Error: \(error)")
+                #endif
             }
 
             if self.WSConnectionTries < 10 {

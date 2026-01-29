@@ -17,7 +17,7 @@ import FoundationNetworking
 
 /// Simple Networking
 ///
-/// This class is ment for simple networking tasks.
+/// This class is meant for simple networking tasks.
 ///
 /// [https://github.com/0xWDG/SimpleNetworking](https://github.com/0xWDG/SimpleNetworking)
 open class SimpleNetworking: @unchecked Sendable {
@@ -48,13 +48,13 @@ open class SimpleNetworking: @unchecked Sendable {
     /// custom session
     internal var session: URLSession? = URLSession(configuration: .ephemeral)
 
-    /// Streaming responder
+    /// Streaming response handler for connection open event
     internal var onOpen: (() -> Void)?
 
-    /// Streaming responder
+    /// Streaming response handler for message received event
     internal var onMessage: ((Data) -> Void)?
 
-    /// Streaming responder
+    /// Streaming response handler for error event
     internal var onError: ((Error) -> Void)?
 
     /// URLSession Data Task
@@ -69,8 +69,15 @@ open class SimpleNetworking: @unchecked Sendable {
     /// Websocket connection tries
     internal var WSConnectionTries: Int = 0
 
-    /// Default URL
-    internal let defaultURL = URL(string: "https://wesleydegroot.nl")! // swiftlint:disable:this force_unwrapping
+    /// Default URL (for fallback purposes)
+    internal let defaultURL: URL = {
+        // This is a hardcoded URL that should always be valid
+        // Using a static initializer to avoid force unwrapping at the declaration site
+        guard let url = URL(string: "https://wesleydegroot.nl") else {
+            fatalError("Invalid hardcoded default URL - this should never happen")
+        }
+        return url
+    }()
 
     /// Mock data
     internal var mockData = [String: SNMock]()
