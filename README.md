@@ -100,6 +100,99 @@ Task {
 }
 ```
 
+### Upload Files Async/Await
+
+Upload a single file with multipart/form-data encoding:
+
+```swift
+Task {
+    // Create a file upload from data
+    let fileData = "Hello, World!".data(using: .utf8)!
+    let fileUpload = SimpleNetworking.FileUpload(
+        data: fileData,
+        name: "file",
+        filename: "document.txt",
+        mimeType: "text/plain"
+    )
+    
+    // Create upload data with optional parameters
+    let uploadData = SimpleNetworking.MultipartUploadData(
+        file: fileUpload,
+        parameters: ["description": "My document"]
+    )
+    
+    // Perform the upload
+    let response = await networking.upload(
+        path: "/upload",
+        uploadData: uploadData
+    )
+    
+    print(response.string)
+}
+```
+
+Upload a file from a file URL:
+
+```swift
+Task {
+    do {
+        // Create a file upload from a file URL
+        let fileURL = URL(fileURLWithPath: "/path/to/file.jpg")
+        let fileUpload = try SimpleNetworking.FileUpload(
+            fileURL: fileURL,
+            name: "photo"
+            // filename and mimeType are auto-detected from the file
+        )
+        
+        let uploadData = SimpleNetworking.MultipartUploadData(
+            file: fileUpload
+        )
+        
+        let response = await networking.upload(
+            path: "/upload",
+            uploadData: uploadData
+        )
+        
+        print(response.string)
+    } catch {
+        print("Error uploading file: \(error)")
+    }
+}
+```
+
+Upload multiple files:
+
+```swift
+Task {
+    let file1 = SimpleNetworking.FileUpload(
+        data: "Content 1".data(using: .utf8)!,
+        name: "file1",
+        filename: "document1.txt"
+    )
+    
+    let file2 = SimpleNetworking.FileUpload(
+        data: "Content 2".data(using: .utf8)!,
+        name: "file2",
+        filename: "document2.txt"
+    )
+    
+    let uploadData = SimpleNetworking.MultipartUploadData(
+        files: [file1, file2],
+        parameters: [
+            "user_id": "123",
+            "description": "Multiple files"
+        ]
+    )
+    
+    let response = await networking.upload(
+        path: "/upload",
+        uploadData: uploadData
+    )
+    
+    print(response.string)
+}
+```
+
 ### GET data (closure based)
 
 ```swift
@@ -124,6 +217,162 @@ networking.request(
     )
 ) { networkResponse in
     print(networkResponse)
+}
+```
+
+### Upload Files (closure based)
+
+```swift
+let fileData = "Hello, World!".data(using: .utf8)!
+let fileUpload = SimpleNetworking.FileUpload(
+    data: fileData,
+    name: "file",
+    filename: "document.txt"
+)
+
+let uploadData = SimpleNetworking.MultipartUploadData(
+    file: fileUpload,
+    parameters: ["key": "value"]
+)
+
+networking.upload(
+    path: "/upload",
+    uploadData: uploadData
+) { networkResponse in
+    print(networkResponse.string)
+}
+```
+
+### Property Wrappers
+
+SimpleNetworking provides property wrappers for a declarative approach to defining HTTP requests.
+
+#### Available Property Wrappers
+
+- `@Get("/path")` - GET requests
+- `@Post("/path")` - POST requests with optional data
+- `@Put("/path")` - PUT requests with optional data
+- `@Delete("/path")` - DELETE requests with optional data
+- `@Upload("/path")` - File upload requests
+- `@SimpleNetworkingWrapper(.method, "/path")` - Generic wrapper for any HTTP method
+
+#### Standalone Usage
+
+The property wrapper types can be used as standalone values without the `@` syntax:
+
+```swift
+import SimpleNetworking
+
+// Configure the shared instance (optional)
+SimpleNetworking.shared.set(serverURL: "https://api.example.com")
+
+// Create wrappers as standalone values
+let getUsers = SimpleNetworking.Get("/users")
+let createUser = SimpleNetworking.Post("/users")
+let updateUser = SimpleNetworking.Put("/users/123")
+let deleteUser = SimpleNetworking.Delete("/users/123")
+
+// Execute requests
+let usersResponse = await getUsers.execute()
+print(usersResponse.string)
+
+let createResponse = await createUser.execute(["name": "John Doe", "email": "john@example.com"])
+print(createResponse.string)
+
+let updateResponse = await updateUser.execute(["name": "Jane Doe"])
+print(updateResponse.string)
+
+let deleteResponse = await deleteUser.execute()
+print(deleteResponse.statuscode)
+```
+
+#### File Upload (Standalone)
+
+```swift
+import SimpleNetworking
+
+// Create an upload wrapper as a standalone value
+let uploadFile = SimpleNetworking.Upload("/upload")
+
+// Prepare the file
+let fileData = "Hello, World!".data(using: .utf8)!
+let fileUpload = SimpleNetworking.FileUpload(
+    data: fileData,
+    name: "file",
+    filename: "document.txt",
+    mimeType: "text/plain"
+)
+
+let uploadData = SimpleNetworking.MultipartUploadData(
+    file: fileUpload,
+    parameters: ["user_id": "123"]
+)
+
+// Execute the upload
+let response = await uploadFile.execute(uploadData)
+print(response.string)
+```
+
+#### Generic Wrapper (Standalone)
+
+```swift
+import SimpleNetworking
+
+// Use the generic wrapper with any HTTP method
+let getRequest = SimpleNetworking.SimpleNetworkingWrapper(.get, "/users")
+let response = await getRequest.execute()
+
+// With data for POST/PUT/DELETE
+let postRequest = SimpleNetworking.SimpleNetworkingWrapper(.post(nil), "/users")
+let postResponse = await postRequest.execute(["name": "John"])
+```
+
+#### Using as Property Wrappers with @ Syntax
+
+Property wrappers are primarily designed to be used with the `@` syntax on properties in your classes or structs:
+
+```swift
+import SimpleNetworking
+
+class UserService {
+    @Get("/users")
+    var users: SimpleNetworking.NetworkResponse?
+    
+    @Post("/users")
+    var createUser: SimpleNetworking.NetworkResponse?
+    
+    @Put("/users/123")
+    var updateUser: SimpleNetworking.NetworkResponse?
+    
+    @Delete("/users/123")
+    var deleteUser: SimpleNetworking.NetworkResponse?
+    
+    func fetchUsers() async {
+        let response = await $users.execute()
+        print(response.string ?? "No data")
+    }
+    
+    func addUser(name: String, email: String) async {
+        let userData = ["name": name, "email": email]
+        let response = await $createUser.execute(userData)
+        print(response.string ?? "No data")
+    }
+}
+```
+
+**Note:** Property wrappers use `SimpleNetworking.shared` by default, so any configuration you set on the shared instance will apply to all property wrappers.
+
+When using property wrappers in a `struct` (rather than a `class`), methods that call `execute()` on the projected value must be marked as `mutating` because the execution updates the wrapped value. For example:
+
+```swift
+struct UserService {
+    @Get("/users")
+    var users: SimpleNetworking.NetworkResponse?
+    
+    mutating func fetchUsers() async {
+        let response = await $users.execute()
+        print(response.string ?? "No data")
+    }
 }
 ```
 

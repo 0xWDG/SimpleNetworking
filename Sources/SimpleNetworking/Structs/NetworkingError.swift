@@ -12,7 +12,7 @@ import Foundation
 
 extension SimpleNetworking {
     /// Networking error (generator)
-    public struct NetworkingError: Error {
+    public struct NetworkingError: Error, LocalizedError, Equatable {
         /// Error message
         let message: String
 
@@ -22,14 +22,19 @@ extension SimpleNetworking {
             self.message = message
         }
 
-        /// The error message
-        public var localizedDescription: String {
+        /// The error description for LocalizedError protocol
+        public var errorDescription: String? {
             return message
         }
 
         /// The error code
         public var code: Int {
             return (self as NSError).code
+        }
+
+        /// Equatable conformance
+        public static func == (lhs: NetworkingError, rhs: NetworkingError) -> Bool {
+            return lhs.message == rhs.message
         }
     }
 }

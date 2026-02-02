@@ -65,7 +65,10 @@ extension SimpleNetworking {
             }
 
             guard let session = session else {
-                fatalError("There is no session")
+                return .init(
+                    error: NetworkingError(message: "No URLSession available"),
+                    request: request
+                )
             }
 
             do {

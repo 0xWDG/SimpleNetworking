@@ -15,9 +15,21 @@ import Foundation
 import FoundationNetworking
 #endif
 
+#if canImport(OSLog)
+import OSLog
+#endif
+
 extension SimpleNetworking {
     /// Network response
-    public struct NetworkResponse {
+    public struct NetworkResponse: @unchecked Sendable {
+        #if canImport(OSLog)
+        /// Logger for NetworkResponse (only available on Apple platforms)
+        private static let logger = Logger(
+            subsystem: "nl.wesleydegroot.SimpleNetworking",
+            category: "decoding"
+        )
+        #endif
+
         /// URL Response
         public var response: URLResponse?
 
@@ -36,7 +48,7 @@ extension SimpleNetworking {
         /// Received data as Dictionary (if the data is JSON)
         public var dictionary: [String: Any]?
 
-        /// Reveived cookies.
+        /// Received cookies.
         public var cookies: [HTTPCookie]?
 
         /// Request
@@ -130,8 +142,13 @@ extension SimpleNetworking {
                 decoder.keyDecodingStrategy = strategy
                 return try decoder.decode(T.self, from: data)
             } catch {
-                print("\(file):\(line) \(function):\r\nDecoding error", error)
-                print("Raw string: \"\(self.string ?? "")\".")
+                #if canImport(OSLog)
+                Self.logger.error("Decoding error at \(file):\(line) \(function): \(error.localizedDescription)")
+                Self.logger.debug("Raw string: \"\(self.string ?? "")\"")
+                #else
+                print("[ERROR] Decoding error at \(file):\(line) \(function): \(error)")
+                print("[DEBUG] Raw string: \"\(self.string ?? "")\"")
+                #endif
                 return nil
             }
         }

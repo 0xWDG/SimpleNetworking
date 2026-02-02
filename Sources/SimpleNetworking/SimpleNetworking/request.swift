@@ -64,6 +64,7 @@ extension SimpleNetworking {
     ///   such as an item on a remote server or the path to a local file.
     ///   - method: The HTTP request method.
     ///   - completionHandler: This completion handler takes the following parameter: [NetworkResponse](NetworkResponse)
+    @available(*, deprecated, message: "Use async/await version instead for better concurrency support")
     public func request(
         path: String,
         method: HTTPMethod,

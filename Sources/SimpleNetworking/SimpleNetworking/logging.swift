@@ -15,7 +15,43 @@ import Foundation
 import FoundationNetworking
 #endif
 
+#if canImport(OSLog)
+import OSLog
+#endif
+
 extension SimpleNetworking {
+    #if canImport(OSLog)
+    /// Logger for SimpleNetworking (only available on Apple platforms)
+    private static let logger = Logger(
+        subsystem: "nl.wesleydegroot.SimpleNetworking",
+        category: "networking"
+    )
+    #endif
+
+    /// Log helper that works on all platforms
+    private func log(_ message: String, level: LogLevel = .info) {
+        #if canImport(OSLog)
+        switch level {
+        case .debug:
+            Self.logger.debug("\(message)")
+        case .info:
+            Self.logger.info("\(message)")
+        case .error:
+            Self.logger.error("\(message)")
+        }
+        #else
+        // Fallback to print on platforms without OSLog (e.g., Linux)
+        print("[\(level.rawValue)] \(message)")
+        #endif
+    }
+
+    /// Log levels
+    private enum LogLevel: String {
+        case debug = "DEBUG"
+        case info = "INFO"
+        case error = "ERROR"
+    }
+
     internal func networkLog(request: URLRequest?,
                              session: URLSession?,
                              response: URLResponse?,
@@ -49,64 +85,62 @@ extension SimpleNetworking {
         ].contains(true) {
             if let httpMethod = request.httpMethod,
                let url = request.url {
-                print("\nRequest:")
-                print("  \(httpMethod) \(url)")
+                log("Request: \(httpMethod) \(url.absoluteString)")
             }
         }
         if debug.requestHeaders, let headers = request.allHTTPHeaderFields {
-            print("\n  Headers:")
+            log("Headers:", level: .debug)
             for (header, cont) in headers {
-                print("    \(header): \(cont)")
+                log("  \(header): \(cont)", level: .debug)
             }
         }
         if debug.requestCookies {
-            print("\n  Cookies:")
+            log("Cookies:", level: .debug)
             if let cookies = session?.configuration.httpCookieStorage?.cookies {
                 for cookie in cookies {
-                    print("    \(cookie.name): \(cookie.value)")
+                    log("  \(cookie.name): \(cookie.value)", level: .debug)
                 }
             } else {
-                print("    No cookies")
+                log("  No cookies", level: .debug)
             }
         }
         if debug.requestBody {
-            print("\n  Body:")
+            log("Body:", level: .debug)
             if let httpBody = request.httpBody,
                let httpBodyString = String(data: httpBody, encoding: .utf8) {
-                print("    \(httpBodyString)")
+                log("  \(httpBodyString)", level: .debug)
             }
         }
     }
 
     internal func networkLogResponse(response: HTTPURLResponse) {
-        print("\nHTTPURLResponse:")
-        print("  HTTP \(response.statusCode)")
+        log("HTTPURLResponse: HTTP \(response.statusCode)")
         for (header, cont) in response.allHeaderFields {
-            print("    \(header): \(cont)")
+            log("  \(header): \(cont)", level: .debug)
         }
     }
 
     internal func networkLogData(data: Data) {
         guard let stringData = String(data: data, encoding: .utf8) else {
-            print("Unable to decode networkLogData")
+            log("Unable to decode networkLogData", level: .error)
             return
         }
 
         if debug.responseBody {
-            print("\n  Body:")
+            log("Body:", level: .debug)
             for line in stringData.split(separator: "\n") {
-                print("    \(line)")
+                log("  \(line)", level: .debug)
             }
         }
 
         if debug.responseJSON {
-            print("\n  Decoded JSON:")
+            log("Decoded JSON:", level: .debug)
             if let dictionary = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 for (key, value) in dictionary {
-                    print("    \(key): \"\(value)\"")
+                    log("  \(key): \"\(value)\"", level: .debug)
                 }
             } else {
-                print("    Unable to parse JSON")
+                log("  Unable to parse JSON", level: .debug)
             }
         }
     }
