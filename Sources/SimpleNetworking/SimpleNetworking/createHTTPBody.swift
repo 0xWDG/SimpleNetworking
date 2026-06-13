@@ -18,6 +18,10 @@ extension SimpleNetworking {
     /// - Returns: Encoded data
     func createHTTPBody(with value: Any?, postType: POSTEncoding = .auto) -> Data? {
         // swiftlint:disable:previous cyclomatic_complexity function_body_length
+        if let data = value as? Data {
+            return data
+        }
+
         // Determine the actual encoding to use
         let actualEncoding: POSTEncoding
         switch postType {
@@ -30,11 +34,19 @@ extension SimpleNetworking {
         switch actualEncoding {
         case .json:
             if let contents = value as? [String: Codable] {
-                return try? JSONSerialization.data(withJSONObject: contents)
+                do {
+                    return try JSONSerialization.data(withJSONObject: contents)
+                } catch {
+                    log(error.localizedDescription, level: .error)
+                }
             }
 
-            if let contents = value as? Codable {
-                return try? JSONEncoder().encode(contents)
+            if let contents = value as? Encodable {
+                do {
+                    return try JSONEncoder().encode(contents)
+                } catch {
+                    log(error.localizedDescription, level: .error)
+                }
             }
 
         case .plain:

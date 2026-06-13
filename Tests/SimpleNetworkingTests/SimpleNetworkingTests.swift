@@ -41,6 +41,47 @@ final class SimpleNetworkingTests: XCTestCase {
         XCTAssert(response.string?.contains("OVERRIDE") ?? false)
     }
 
+    func testPutRequestFillsHTTPBodyWithRawData() async {
+        let body = Data(#"{"name":"Updated"}"#.utf8)
+        networking.set(mockData: [
+            "https://wesleydegroot.nl/api/update": .init(
+                data: "{}",
+                response: nil,
+                statusCode: 200,
+                error: nil
+            )
+        ])
+
+        let response = await networking.request(
+            path: "/api/update",
+            method: .put(body)
+        )
+
+        XCTAssertEqual(response.request.httpMethod, "PUT")
+        XCTAssertEqual(response.request.httpBody, body)
+        XCTAssertEqual(response.request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+    }
+
+    func testPutRequestFillsHTTPBodyWithJSONDictionary() async throws {
+        networking.set(mockData: [
+            "https://wesleydegroot.nl/api/update": .init(
+                data: "{}",
+                response: nil,
+                statusCode: 200,
+                error: nil
+            )
+        ])
+
+        let response = await networking.request(
+            path: "/api/update",
+            method: .put(["id": "123", "name": "Updated"])
+        )
+
+        let body = try XCTUnwrap(response.request.httpBody)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: String])
+        XCTAssertEqual(json, ["id": "123", "name": "Updated"])
+    }
+
     // MARK: - File Upload Tests
 
     func testFileUploadInitialization() {
