@@ -29,7 +29,7 @@ extension SimpleNetworking {
     #endif
 
     /// Log helper that works on all platforms
-    private func log(_ message: String, level: LogLevel = .info) {
+    internal func log(_ message: String, level: LogLevel = .info) {
         #if canImport(OSLog)
         switch level {
         case .debug:
@@ -46,7 +46,7 @@ extension SimpleNetworking {
     }
 
     /// Log levels
-    private enum LogLevel: String {
+    internal enum LogLevel: String {
         case debug = "DEBUG"
         case info = "INFO"
         case error = "ERROR"
