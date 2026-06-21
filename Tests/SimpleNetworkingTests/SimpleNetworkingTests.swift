@@ -266,7 +266,7 @@ final class SimpleNetworkingTests: XCTestCase {
     }
 
     func testFileUploadError_InvalidURL() {
-        let httpURL = URL(string: "https://example.com/file.txt")! // swiftlint:disable:this force_unwrapping
+        let httpURL = URL(string: "https://example.com/file.txt")!
 
         XCTAssertThrowsError(try SimpleNetworking.FileUpload(
             fileURL: httpURL,
