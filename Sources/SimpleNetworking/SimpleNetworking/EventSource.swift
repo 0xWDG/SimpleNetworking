@@ -57,23 +57,9 @@ extension SimpleNetworking {
         self.onMessage = onMessage
         self.onError = onError
 
-        ESsession = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue())
-        if let cookies = self.cookies {
-            for cookieData in cookies {
-                ESsession?.configuration.httpCookieStorage?.setCookie(cookieData)
-            }
-        }
-
         var request = URLRequest(url: url)
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-
-        task = ESsession?.dataTask(with: request) { _, _, error in
-            if let error = error {
-                self.onError?(error)
-                return
-            }
-        }
-        task?.resume()
+        addStoredCookies(to: &request)
 
         // Keep listening with streaming delegate
         ESsession = URLSession(

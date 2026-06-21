@@ -16,6 +16,53 @@ import FoundationNetworking
 #endif
 
 extension SimpleNetworking {
+    internal func cookieSnapshot() -> [HTTPCookie] {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
+        return cookies ?? []
+    }
+
+    internal func addStoredCookies(to request: inout URLRequest) {
+        stateLock.lock()
+        let storedCookies = cookies ?? []
+        stateLock.unlock()
+
+        guard !storedCookies.isEmpty,
+              let cookieHeader = HTTPCookie.requestHeaderFields(with: storedCookies)["Cookie"] else {
+            return
+        }
+
+        request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+    }
+
+    internal func saveCookies(from response: URLResponse?) {
+        guard let httpResponse = response as? HTTPURLResponse,
+              let url = httpResponse.url else {
+            return
+        }
+
+        let headerFields = httpResponse.allHeaderFields.reduce(into: [String: String]()) { result, header in
+            guard let key = header.key as? String else {
+                return
+            }
+
+            result[key] = "\(header.value)"
+        }
+        let responseCookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
+
+        guard !responseCookies.isEmpty else {
+            return
+        }
+
+        stateLock.lock()
+        for cookie in responseCookies {
+            cookies?.removeAll { $0.name == cookie.name && $0.domain == cookie.domain && $0.path == cookie.path }
+            cookies?.append(cookie)
+        }
+        stateLock.unlock()
+    }
+
     /// Create and add a cookie to the storage
     /// - Parameters:
     ///   - domain: cookie domain
@@ -29,7 +76,9 @@ extension SimpleNetworking {
             .name: name,
             .value: value
         ]) {
+            stateLock.lock()
             cookies?.append(cookie)
+            stateLock.unlock()
             return true
         } else {
             return false
@@ -44,6 +93,9 @@ extension SimpleNetworking {
     ///   - value: cookie value
     public func cookie(deleteCookieWithDomain: String?, path: String?, name: String?, value: String?) {
         var newCookieStorage: [HTTPCookie] = []
+
+        stateLock.lock()
+        defer { stateLock.unlock() }
 
         guard let unwrapped = cookies else {
             return
@@ -65,6 +117,9 @@ extension SimpleNetworking {
     /// - Parameter reset: reset
     public func cookie(reset: Bool) {
         if reset {
+            stateLock.lock()
+            defer { stateLock.unlock() }
+
             cookies?.removeAll()
 
             assert((cookies ?? []).isEmpty, "Failed to reset cookie storage.")

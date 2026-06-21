@@ -28,7 +28,10 @@ extension SimpleNetworking {
         file: String = #file,
         line: Int = #line,
         function: String = #function) async -> NetworkResponse {
-            if let url = request.url,
+            var preparedRequest = request
+            addStoredCookies(to: &preparedRequest)
+
+            if let url = preparedRequest.url,
                let mock = mockData[url.absoluteString] {
                 let data = mock.data ?? .init()
 
@@ -40,7 +43,7 @@ extension SimpleNetworking {
                     string: String(data: data, encoding: .utf8),
                     dictionary: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                     cookies: nil,
-                    request: request
+                    request: preparedRequest
                 )
             }
 
@@ -56,28 +59,18 @@ extension SimpleNetworking {
                 return .init(error: error, request: request)
             }
             #else
-            if let cookies = self.cookies {
-                for cookieData in cookies {
-                    if let cookiestorage = self.session?.configuration.httpCookieStorage {
-                        cookiestorage.setCookie(cookieData)
-                    }
-                }
-            }
-
             guard let session = session else {
                 return .init(
                     error: NetworkingError(message: "No URLSession available"),
-                    request: request
+                    request: preparedRequest
                 )
             }
 
             do {
-                let (data, response) = try await session.data(for: request)
+                let (data, response) = try await session.data(for: preparedRequest)
 
-                if let responseCookies = session.configuration.httpCookieStorage?.cookies {
-                    // Save our cookies
-                    cookies = responseCookies
-                }
+                saveCookies(from: response)
+                let responseCookies = cookieSnapshot()
 
                 fullResponse = String(data: data, encoding: .utf8)
 
@@ -98,11 +91,11 @@ extension SimpleNetworking {
                     data: data,
                     string: String(data: data, encoding: .utf8),
                     dictionary: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                    cookies: session.configuration.httpCookieStorage?.cookies,
-                    request: request
+                    cookies: responseCookies,
+                    request: preparedRequest
                 )
             } catch {
-                return .init(error: error, request: request)
+                return .init(error: error, request: preparedRequest)
             }
             #endif
         }
@@ -120,6 +113,10 @@ extension SimpleNetworking {
         file: String = #file,
         line: Int = #line,
         function: String = #function) {
+            var preparedRequest = request
+            addStoredCookies(to: &preparedRequest)
+            let request = preparedRequest
+
             if let url = request.url,
                let mock = mockData[url.absoluteString] {
                 let data = mock.data ?? .init()
@@ -137,12 +134,6 @@ extension SimpleNetworking {
             }
 
             DispatchQueue.global(qos: .userInitiated).async {
-                if let cookies = self.cookies {
-                    for cookieData in cookies {
-                        self.session?.configuration.httpCookieStorage?.setCookie(cookieData)
-                    }
-                }
-
                 // Start our datatask
                 self.session?.dataTask(with: request) { [self] (siteData, response, taskError) in
                     // Check if we got any useable site data
@@ -152,7 +143,8 @@ extension SimpleNetworking {
                     }
 
                     // Save our cookies
-                    cookies = session?.configuration.httpCookieStorage?.cookies
+                    saveCookies(from: response)
+                    let responseCookies = cookieSnapshot()
                     fullResponse = String(data: siteData, encoding: .utf8)
 
                     self.networkLog(
@@ -172,7 +164,7 @@ extension SimpleNetworking {
                         data: siteData,
                         string: String(data: siteData, encoding: .utf8),
                         dictionary: try? JSONSerialization.jsonObject(with: siteData, options: []) as? [String: Any],
-                        cookies: session?.configuration.httpCookieStorage?.cookies,
+                        cookies: responseCookies,
                         request: request
                     ))
                 }.resume()

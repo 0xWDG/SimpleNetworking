@@ -27,6 +27,9 @@ open class SimpleNetworking: @unchecked Sendable {
     /// All the cookies
     public var cookies: [HTTPCookie]? = []
 
+    /// Protects mutable shared state used by concurrent async requests.
+    internal let stateLock = NSLock()
+
     /// Header
     public var headers: [HTTPHeader]? = []
 
@@ -132,6 +135,9 @@ open class SimpleNetworking: @unchecked Sendable {
     /// Add a cookie to the storage
     /// - Parameter add: cookie
     public func cookie(add cookie: HTTPCookie) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
         cookies?.removeAll(where: { $0.name == cookie.name })
         cookies?.append(cookie)
     }
@@ -150,9 +156,12 @@ open class SimpleNetworking: @unchecked Sendable {
     }
 
     // MARK: - Add values
-        /// Add a cookie to the storage
+    /// Add a cookie to the storage
     /// - Parameter add: cookie
     public func add(cookie: HTTPCookie) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
         cookies?.removeAll(where: { $0.name == cookie.name })
         cookies?.append(cookie)
     }
