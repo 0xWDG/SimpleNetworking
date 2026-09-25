@@ -1,5 +1,5 @@
-import XCTest
 @testable import SimpleNetworking
+import XCTest
 
 final class PropertyWrapperTests: XCTestCase {
     // swiftlint:disable:previous type_body_length

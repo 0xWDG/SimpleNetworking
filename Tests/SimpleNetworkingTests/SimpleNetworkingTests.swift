@@ -1,5 +1,5 @@
-import XCTest
 @testable import SimpleNetworking
+import XCTest
 
 final class SimpleNetworkingTests: XCTestCase {
     let networking = SimpleNetworking.shared

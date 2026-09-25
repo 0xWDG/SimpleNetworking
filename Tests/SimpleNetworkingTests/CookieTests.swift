@@ -1,6 +1,6 @@
 import Foundation
-import XCTest
 @testable import SimpleNetworking
+import XCTest
 
 final class CookieTests: XCTestCase {
     private var networking: SimpleNetworking!
