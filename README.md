@@ -157,11 +157,14 @@ let response = await networking.upload(
 
 Use an immutable configuration to create clients that can be safely shared across concurrent tasks. Configuration updates are applied atomically, so an in-flight request always uses one consistent snapshot.
 
+Clients use `URLSession.shared` by default. To use an ephemeral session with isolated in-memory cookie and cache storage, set `sessionMode: .ephemeral`. You can also inject a custom `URLSession` through the initializer's `session` parameter.
+
 ```swift
 let networking = SimpleNetworking(configuration: .init(
     serverURL: "https://api.example.com",
     authorization: "access-token",
-    headers: [.init(name: "X-App-Version", value: "1.0")]
+    headers: [.init(name: "X-App-Version", value: "1.0")],
+    sessionMode: .ephemeral
 ))
 ```
 

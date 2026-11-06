@@ -24,6 +24,14 @@ open class SimpleNetworking: @unchecked Sendable {
     /// Shared instance
     public static let shared = SimpleNetworking()
 
+    /// Selects the default URL session used by a client.
+    public enum SessionMode: Sendable {
+        /// Uses the process-wide shared session and its shared storage.
+        case shared
+        /// Creates a session with isolated, in-memory cookie and cache storage.
+        case ephemeral
+    }
+
     /// Immutable values used to create a client. A configuration can safely be
     /// shared between tasks; changes to a client remain local to that client.
     public struct Configuration: Sendable {
@@ -32,19 +40,23 @@ open class SimpleNetworking: @unchecked Sendable {
         public let authorization: String?
         public let headers: [HTTPHeader]
         public let encoding: POSTEncoding
+        /// The session mode used when no custom session is injected.
+        public let sessionMode: SessionMode
 
         public init(
             serverURL: String = "",
             userAgent: String = "Simple Networking (https://github.com/0xWDG/SimpleNetworking)",
             authorization: String? = nil,
             headers: [HTTPHeader] = [],
-            encoding: POSTEncoding = .json
+            encoding: POSTEncoding = .json,
+            sessionMode: SessionMode = .shared
         ) {
             self.serverURL = serverURL
             self.userAgent = userAgent
             self.authorization = authorization
             self.headers = headers
             self.encoding = encoding
+            self.sessionMode = sessionMode
         }
     }
 
@@ -135,11 +147,12 @@ open class SimpleNetworking: @unchecked Sendable {
         authToken = configuration.authorization
         postEncoding = configuration.encoding
         headerStorage = configuration.headers
-        #if canImport(FoundationNetworking)
-        self.session = session ?? URLSession.shared
-        #else
-        self.session = session ?? URLSession(configuration: .ephemeral)
-        #endif
+        switch configuration.sessionMode {
+        case .shared:
+            self.session = session ?? URLSession.shared
+        case .ephemeral:
+            self.session = session ?? URLSession(configuration: .ephemeral)
+        }
     }
 
     internal func withStateLock<T>(_ body: () -> T) -> T {

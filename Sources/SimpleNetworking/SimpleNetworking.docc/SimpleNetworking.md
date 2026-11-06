@@ -19,11 +19,14 @@ networking.set(serverURL: "https://api.example.com")
 
 For new code, prefer an isolated client configured once at creation time. ``SimpleNetworking/Configuration`` is immutable, and the client takes an atomic settings snapshot before each request.
 
+Clients use ``URLSession/shared`` by default. Set `sessionMode` to `.ephemeral` to use isolated in-memory cookie and cache storage, or pass a custom session to the initializer when you need a specific URL session configuration.
+
 ```swift
 let networking = SimpleNetworking(configuration: .init(
     serverURL: "https://api.example.com",
     authorization: "access-token",
-    headers: [.init(name: "X-App-Version", value: "1.0")]
+    headers: [.init(name: "X-App-Version", value: "1.0")],
+    sessionMode: .ephemeral
 ))
 ```
 

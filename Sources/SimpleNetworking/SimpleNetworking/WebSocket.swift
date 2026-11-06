@@ -34,7 +34,7 @@ extension SimpleNetworking {
     ///   - responder: The handler to be called when messages are received
     public func connect(to socket: URL, responder: @escaping ((Data) -> Void)) {
         self.onMessage = responder
-        WSSocket = URLSession.shared.webSocketTask(with: socket)
+        WSSocket = requestSettings().session?.webSocketTask(with: socket)
         WSSocket?.resume()
         readMessage()
     }

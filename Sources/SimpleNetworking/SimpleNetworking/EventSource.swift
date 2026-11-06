@@ -62,8 +62,9 @@ extension SimpleNetworking {
         addStoredCookies(to: &request)
 
         // Keep listening with streaming delegate
+        let configuration = requestSettings().session?.configuration ?? .default
         ESsession = URLSession(
-            configuration: .default,
+            configuration: configuration,
             delegate: EventSourceDelegate(onMessage: onMessage),
             delegateQueue: nil
         )
