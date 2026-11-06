@@ -1,6 +1,10 @@
 @testable import SimpleNetworking
 import XCTest
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 final class SimpleNetworkingTests: XCTestCase {
     let networking = SimpleNetworking.shared
 
