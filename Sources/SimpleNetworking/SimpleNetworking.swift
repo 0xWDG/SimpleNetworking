@@ -85,7 +85,7 @@ open class SimpleNetworking: @unchecked Sendable {
     internal var postEncoding: POSTEncoding = .json
 
     /// custom session
-    internal var session: URLSession? = URLSession(configuration: .ephemeral)
+    internal var session: URLSession?
 
     /// Streaming response handler for connection open event
     internal var onOpen: (() -> Void)?
@@ -135,7 +135,11 @@ open class SimpleNetworking: @unchecked Sendable {
         authToken = configuration.authorization
         postEncoding = configuration.encoding
         headerStorage = configuration.headers
+        #if canImport(FoundationNetworking)
+        self.session = session ?? URLSession.shared
+        #else
         self.session = session ?? URLSession(configuration: .ephemeral)
+        #endif
     }
 
     internal func withStateLock<T>(_ body: () -> T) -> T {
