@@ -21,7 +21,7 @@ import OSLog
 
 extension SimpleNetworking {
     /// Network response
-    public struct NetworkResponse: @unchecked Sendable {
+    public struct NetworkResponse: CustomStringConvertible, @unchecked Sendable {
         #if canImport(OSLog)
         /// Logger for NetworkResponse (only available on Apple platforms)
         private static let logger = Logger(
@@ -54,20 +54,53 @@ extension SimpleNetworking {
         /// Request
         public var request: URLRequest
 
+        /// Whether this response has a 2xx HTTP status and no transport error.
+        public var isSuccess: Bool {
+            error == nil && (statuscode.map { (200...299).contains($0) } ?? false)
+        }
+
+        /// A bounded, UTF-8 diagnostic body suitable for error reporting.
+        public var bodySnippet: String? {
+            guard let string else { return nil }
+            return String(string.prefix(4_096))
+        }
+
+        /// The structured error produced by this library, when available.
+        public var networkingError: NetworkingError? {
+            error as? NetworkingError
+        }
+
+        /// A readable summary that includes the originating HTTP request and its cURL equivalent.
+        public var description: String {
+            let status = statuscode.map(String.init) ?? "unknown"
+            let responseBody = string.map { "\nResponse body:\n\($0)" } ?? ""
+            return """
+            NetworkResponse(status: \(status))
+            Request:
+            \(asHTTPRequest)
+            cURL:
+            \(asCURL)\(responseBody)
+            """
+        }
+
+        internal mutating func normalizeError() {
+            if let error, !(error is NetworkingError) {
+                self.error = NetworkingError.transport(error)
+            } else if error == nil,
+                      let statuscode,
+                      !(200...299).contains(statuscode) {
+                error = NetworkingError.httpStatus(response: self)
+            }
+        }
+
         /// Request as cURL command.
         public var cURL: String {
             let cURL = "curl"
             let method = "-X \(request.httpMethod ?? "GET")"
             let url = request.url.flatMap { "--url '\($0.absoluteString)'" }
-            var cookieString: String?
             let header = request.allHTTPHeaderFields?
                 .map { "-H '\($0): \($1)'" }
                 .joined(separator: " ")
-
-            if let cookies = cookies,
-               let cookieValue = HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] {
-                cookieString = "-H 'Cookie: \(cookieValue)'"
-            }
 
             let data: String?
             if let httpBody = request.httpBody, !httpBody.isEmpty,
@@ -78,9 +111,14 @@ extension SimpleNetworking {
                 data = nil
             }
 
-            return [cURL, method, url, header, cookieString, data]
+            return [cURL, method, url, header, data]
                 .compactMap { $0 }
                 .joined(separator: " ")
+        }
+
+        /// Request as a cURL command.
+        public var asCURL: String {
+            cURL
         }
 
         /// Get the returned HTTP Headers
@@ -108,11 +146,6 @@ extension SimpleNetworking {
                 }
             }
 
-            if let cookies = cookies,
-               let cookieValue = HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] {
-                lines.append("Cookie: \(cookieValue)")
-            }
-
             if let httpBody = request.httpBody, !httpBody.isEmpty,
                 var bodyString = String(data: httpBody, encoding: .utf8) {
                 bodyString = bodyString.replacingOccurrences(of: "'", with: "'\\''")
@@ -124,23 +157,41 @@ extension SimpleNetworking {
             return lines.joined(separator: "\n")
         }
 
-        /// Decode to an Codable type
-        /// - Parameter strategy: decoding strategy
-        /// - Returns: T
-        public func decoded<T: Codable>(
-            strategy: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys,
-            file: String = #file,
-            line: Int = #line,
-            function: String = #function
-        ) -> T? {
-            guard let data = data else {
-                return nil
+        /// Decode to a Codable type, preserving detailed failure information.
+        public func decode<T: Decodable>(
+            _ type: T.Type = T.self,
+            strategy: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys
+        ) throws -> T {
+            guard let data else {
+                throw NetworkingError(
+                    kind: .decoding,
+                    message: "Cannot decode an empty response",
+                    statusCode: statuscode,
+                    responseHeaders: headers,
+                    bodySnippet: bodySnippet
+                )
             }
 
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = strategy
                 return try decoder.decode(T.self, from: data)
+            } catch {
+                throw NetworkingError.decoding(error, response: self)
+            }
+        }
+
+        /// Decode to a Codable type.
+        /// - Parameter strategy: decoding strategy
+        /// - Returns: T
+        public func decoded<T: Decodable>(
+            strategy: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys,
+            file: String = #file,
+            line: Int = #line,
+            function: String = #function
+        ) -> T? {
+            do {
+                return try decode(T.self, strategy: strategy)
             } catch {
                 #if canImport(OSLog)
                 Self.logger.error("Decoding error at \(file):\(line) \(function): \(error.localizedDescription)")

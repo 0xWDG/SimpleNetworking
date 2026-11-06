@@ -19,7 +19,7 @@ extension SimpleNetworking {
     /// - `plain` for Plain text (eg own encoder).
     /// - `graphQL` for graphQL (JSON)
     /// - `multipart` for multipart/form-data (file uploads)
-    public enum POSTEncoding {
+    public enum POSTEncoding: Sendable {
         /// Automatic typing (json)
         case auto
 

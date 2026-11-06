@@ -24,17 +24,53 @@ open class SimpleNetworking: @unchecked Sendable {
     /// Shared instance
     public static let shared = SimpleNetworking()
 
-    /// All the cookies
-    public var cookies: [HTTPCookie]? = []
+    /// Immutable values used to create a client. A configuration can safely be
+    /// shared between tasks; changes to a client remain local to that client.
+    public struct Configuration: Sendable {
+        public let serverURL: String
+        public let userAgent: String
+        public let authorization: String?
+        public let headers: [HTTPHeader]
+        public let encoding: POSTEncoding
 
-    /// Protects mutable shared state used by concurrent async requests.
+        public init(
+            serverURL: String = "",
+            userAgent: String = "Simple Networking (https://github.com/0xWDG/SimpleNetworking)",
+            authorization: String? = nil,
+            headers: [HTTPHeader] = [],
+            encoding: POSTEncoding = .json
+        ) {
+            self.serverURL = serverURL
+            self.userAgent = userAgent
+            self.authorization = authorization
+            self.headers = headers
+            self.encoding = encoding
+        }
+    }
+
+    /// Protects all mutable client state used by concurrent requests.
     internal let stateLock = NSLock()
+    internal var cookieStorage: [HTTPCookie]? = []
+    internal var headerStorage: [HTTPHeader]? = []
+    internal var fullResponseStorage: String? = ""
 
-    /// Header
-    public var headers: [HTTPHeader]? = []
+    /// All the cookies. Prefer the cookie helper methods for atomic updates.
+    public var cookies: [HTTPCookie]? {
+        get { withStateLock { cookieStorage } }
+        set { withStateLock { cookieStorage = newValue } }
+    }
 
-    /// the full networkRequestResponse
-    public var fullResponse: String? = ""
+    /// Headers added to every request.
+    public var headers: [HTTPHeader]? {
+        get { withStateLock { headerStorage } }
+        set { withStateLock { headerStorage = newValue } }
+    }
+
+    /// The most recently completed response body for this client.
+    public var fullResponse: String? {
+        get { withStateLock { fullResponseStorage } }
+        set { withStateLock { fullResponseStorage = newValue } }
+    }
 
     /// URL Prefix
     internal var serverURL: String = ""
@@ -86,36 +122,91 @@ open class SimpleNetworking: @unchecked Sendable {
     internal var mockData = [String: SNMock]()
 
     /// Debug values
-    public var debug: Debug = .init()
+    internal var debugStorage: Debug = .init()
+    public var debug: Debug {
+        get { withStateLock { debugStorage } }
+        set { withStateLock { debugStorage = newValue } }
+    }
+
+    /// Create an isolated networking client with immutable initial settings.
+    public init(configuration: Configuration = .init(), session: URLSession? = nil) {
+        serverURL = configuration.serverURL
+        userAgent = configuration.userAgent
+        authToken = configuration.authorization
+        postEncoding = configuration.encoding
+        headerStorage = configuration.headers
+        self.session = session ?? URLSession(configuration: .ephemeral)
+    }
+
+    internal func withStateLock<T>(_ body: () -> T) -> T {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return body()
+    }
+
+    internal struct RequestSettings {
+        let serverURL: String
+        let userAgent: String
+        let authorization: String?
+        let headers: [HTTPHeader]
+        let session: URLSession?
+        let mocks: [String: SNMock]
+    }
+
+    /// Capture settings once so one request cannot observe a partially updated
+    /// configuration while another task is reconfiguring the client.
+    internal func requestSettings() -> RequestSettings {
+        withStateLock {
+            .init(
+                serverURL: serverURL,
+                userAgent: userAgent,
+                authorization: authToken,
+                headers: headerStorage ?? [],
+                session: session,
+                mocks: mockData
+            )
+        }
+    }
+
+    /// Atomically replace the client's request configuration.
+    public func set(configuration: Configuration) {
+        withStateLock {
+            serverURL = configuration.serverURL
+            userAgent = configuration.userAgent
+            authToken = configuration.authorization
+            postEncoding = configuration.encoding
+            headerStorage = configuration.headers
+        }
+    }
 
     /// Set the server URL
     /// - Parameter serverURL: Server URL
     public func set(serverURL: String?) {
-        self.serverURL = serverURL ?? ""
+        withStateLock { self.serverURL = serverURL ?? "" }
     }
 
     /// Set the User-Agent
     /// - Parameter userAgent: User Agent
     public func set(userAgent: String) {
-        self.userAgent = userAgent
+        withStateLock { self.userAgent = userAgent }
     }
 
     /// Set the authorization token
     /// - Parameter authorization: authorization token
     public func set(authorization: String) {
-        self.authToken = authorization
+        withStateLock { self.authToken = authorization }
     }
 
     /// Set the post type
     /// - Parameter encoding: post encoding
     public func set(encoding: POSTEncoding) {
-        self.postEncoding = encoding
+        withStateLock { self.postEncoding = encoding }
     }
 
     /// Set the session
     /// - Parameter session: session
     public func set(session: URLSession) {
-        self.session = session
+        withStateLock { self.session = session }
     }
 
     /// Set mock url data
@@ -129,55 +220,59 @@ open class SimpleNetworking: @unchecked Sendable {
             }
         }
 
-        self.mockData = newMockData
+        withStateLock { self.mockData = newMockData }
     }
 
-    /// Add a cookie to the storage
-    /// - Parameter add: cookie
+    /// Add or replace a stored cookie by name.
+    /// - Parameter add: Cookie to store; any stored cookie with the same name is replaced.
     public func cookie(add cookie: HTTPCookie) {
-        stateLock.lock()
-        defer { stateLock.unlock() }
-
-        cookies?.removeAll(where: { $0.name == cookie.name })
-        cookies?.append(cookie)
+        withStateLock {
+            cookieStorage?.removeAll(where: { $0.name == cookie.name })
+            cookieStorage?.append(cookie)
+        }
     }
 
     /// Add header to request
     /// - Parameter add: Header to be added.
     public func headers(add header: HTTPHeader) {
-        headers?.removeAll(where: { $0.name == header.name })
-        headers?.append(header)
+        withStateLock {
+            headerStorage?.removeAll(where: { $0.name == header.name })
+            headerStorage?.append(header)
+        }
     }
 
     /// Return the full networkRequestResponse
     /// - Returns: the full networkRequestResponse
     public func networkRequestResponse() -> String? {
-        return fullResponse
+        return withStateLock { fullResponseStorage }
     }
 
     // MARK: - Add values
-    /// Add a cookie to the storage
-    /// - Parameter add: cookie
+    /// Add or replace a stored cookie by name.
+    /// - Parameter add: Cookie to store; any stored cookie with the same name is replaced.
     public func add(cookie: HTTPCookie) {
-        stateLock.lock()
-        defer { stateLock.unlock() }
-
-        cookies?.removeAll(where: { $0.name == cookie.name })
-        cookies?.append(cookie)
+        withStateLock {
+            cookieStorage?.removeAll(where: { $0.name == cookie.name })
+            cookieStorage?.append(cookie)
+        }
     }
 
     /// Add header to request
     /// - Parameter add: Header to be added.
     public func add(header: HTTPHeader) {
-        headers?.removeAll(where: { $0.name == header.name })
-        headers?.append(header)
+        withStateLock {
+            headerStorage?.removeAll(where: { $0.name == header.name })
+            headerStorage?.append(header)
+        }
     }
 
     /// Add header to request
     /// - Parameter add: Header to be added.
     public func add(header: String, value: String) {
         let headerStruct = HTTPHeader(name: header, value: value)
-        headers?.removeAll(where: { $0.name == headerStruct.name })
-        headers?.append(headerStruct)
+        withStateLock {
+            headerStorage?.removeAll(where: { $0.name == headerStruct.name })
+            headerStorage?.append(headerStruct)
+        }
     }
 }

@@ -16,6 +16,25 @@ import FoundationNetworking
 #endif
 
 extension SimpleNetworking {
+    /// Upload multipart files from disk without loading their content into memory.
+    public func upload(
+        path: String,
+        fileUploadData: FileBackedMultipartUploadData,
+        onProgress: @escaping @Sendable (TransferProgress) -> Void = { _ in }
+    ) async -> NetworkResponse {
+        guard let request = createFileBackedUploadRequest(path: path) else {
+            return .init(error: NetworkingError.invalidURL(path), request: .init(url: defaultURL))
+        }
+
+        do {
+            let bodyFile = try createMultipartBodyFile(fileUploadData, boundary: request.boundary)
+            defer { try? FileManager.default.removeItem(at: bodyFile) }
+            return await uploadFileBackedRequest(request.request, bodyFile: bodyFile, onProgress: onProgress)
+        } catch {
+            return .init(error: NetworkingError.transport(error), request: request.request)
+        }
+    }
+
     /// _Asynchronous function_ Uploads files using multipart/form-data encoding
     ///
     /// - Parameters:
@@ -86,7 +105,7 @@ extension SimpleNetworking {
     ///   - path: The upload endpoint path
     ///   - uploadData: The multipart upload data
     /// - Returns: URLRequest or nil if URL is invalid
-    private func createUploadRequest(path: String, uploadData: MultipartUploadData) -> URLRequest? {
+    internal func createUploadRequest(path: String, uploadData: MultipartUploadData) -> URLRequest? {
         guard let siteURL = self.isURL(path) else {
             return nil
         }
@@ -111,5 +130,76 @@ extension SimpleNetworking {
         )
 
         return request
+    }
+
+    private func createFileBackedUploadRequest(path: String) -> (request: URLRequest, boundary: String)? {
+        guard let siteURL = isURL(path) else { return nil }
+        let boundary = generateBoundary()
+        var request = createRequest(url: siteURL)
+        request.httpMethod = "POST"
+        request.setValue(getContentType(postType: .multipart(boundary: boundary)), forHTTPHeaderField: "Content-Type")
+        return (request, boundary)
+    }
+
+    private func createMultipartBodyFile(
+        _ uploadData: FileBackedMultipartUploadData,
+        boundary: String
+    ) throws -> URL {
+        let bodyFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SimpleNetworking-\(UUID().uuidString).multipart")
+        FileManager.default.createFile(atPath: bodyFile.path, contents: nil)
+        let output = try FileHandle(forWritingTo: bodyFile)
+        defer { try? output.close() }
+
+        func write(_ value: String) throws {
+            try output.write(contentsOf: Data(value.utf8))
+        }
+
+        for (key, value) in uploadData.parameters {
+            try write("--\(boundary)\r\n")
+            try write("Content-Disposition: form-data; name=\"\(sanitizeHeaderValue(key))\"\r\n\r\n")
+            try write("\(value)\r\n")
+        }
+
+        for file in uploadData.files {
+            try write("--\(boundary)\r\n")
+            try write("Content-Disposition: form-data; name=\"\(sanitizeHeaderValue(file.name))\"; ")
+            try write("filename=\"\(sanitizeHeaderValue(file.filename))\"\r\n")
+            try write("Content-Type: \(sanitizeHeaderValue(file.mimeType))\r\n\r\n")
+
+            let input = try FileHandle(forReadingFrom: file.fileURL)
+            defer { try? input.close() }
+            while let chunk = try input.read(upToCount: 64 * 1_024), !chunk.isEmpty {
+                try output.write(contentsOf: chunk)
+            }
+            try write("\r\n")
+        }
+
+        try write("--\(boundary)--\r\n")
+        return bodyFile
+    }
+
+    private func uploadFileBackedRequest(
+        _ request: URLRequest,
+        bodyFile: URL,
+        onProgress: @escaping @Sendable (TransferProgress) -> Void
+    ) async -> NetworkResponse {
+        var preparedRequest = request
+        addStoredCookies(to: &preparedRequest)
+        let bodySize = (try? bodyFile.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
+
+        if let url = preparedRequest.url,
+           let mock = requestSettings().mocks[url.absoluteString] {
+            onProgress(.init(completedUnitCount: bodySize, totalUnitCount: bodySize))
+            return response(from: mock.data, response: mock.response, error: mock.error, request: preparedRequest)
+        }
+
+        let delegate = TransferDelegate(progressHandler: onProgress)
+        let configuration = requestSettings().session?.configuration ?? .ephemeral
+        let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
+        var response = await delegate.upload(session: session, request: preparedRequest, bodyFile: bodyFile)
+        saveCookies(from: response.response)
+        response.cookies = cookieSnapshot()
+        return response
     }
 }

@@ -12,7 +12,7 @@ import Foundation
 
 extension SimpleNetworking {
     /// Debug parameters
-    public struct Debug {
+    public struct Debug: Sendable {
         /// Debug: NSURLRequest
         public var requestURL: Bool = false
 

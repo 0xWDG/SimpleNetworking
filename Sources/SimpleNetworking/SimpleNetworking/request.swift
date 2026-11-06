@@ -16,6 +16,59 @@ import FoundationNetworking
 #endif
 
 extension SimpleNetworking {
+    /// Execute an immutable request description.
+    public func execute(
+        _ requestDescription: Request,
+        file: String = #file,
+        line: Int = #line,
+        function: String = #function
+    ) async -> NetworkResponse {
+        guard let baseURL = isURL(requestDescription.path),
+              var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else {
+            return .init(
+                error: NetworkingError.invalidURL(requestDescription.path),
+                request: .init(url: defaultURL)
+            )
+        }
+
+        components.queryItems = (components.queryItems ?? []) + requestDescription.query
+        guard let url = components.url else {
+            return .init(
+                error: NetworkingError.invalidURL(requestDescription.path),
+                request: .init(url: defaultURL)
+            )
+        }
+
+        var request = createRequest(url: url)
+        request.timeoutInterval = requestDescription.timeout ?? request.timeoutInterval
+        if let cachePolicy = requestDescription.cachePolicy {
+            request.cachePolicy = cachePolicy
+        }
+
+        requestDescription.headers.forEach { header in
+            request.setValue(header.value, forHTTPHeaderField: header.name)
+        }
+
+        if let customMethod = requestDescription.customMethod {
+            request.httpMethod = customMethod
+            request.httpBody = requestDescription.body
+        } else if let method = requestDescription.method {
+            request.httpMethod = method.method
+            switch method {
+            case .delete(let data), .post(let data), .patch(let data), .put(let data):
+                if request.value(forHTTPHeaderField: "Content-Type") == nil {
+                    let contentType = getContentType(postType: requestDescription.encoding)
+                    request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+                }
+                request.httpBody = createHTTPBody(with: data, postType: requestDescription.encoding)
+            case .get:
+                break
+            }
+        }
+
+        return await exec(with: request, file: file, line: line, function: function)
+    }
+
     /// _Asynchronous function_ Creates a network request that retrieves the contents of a URL \
     /// based on the specified URL request object, and calls a handler upon completion.
     ///
@@ -105,21 +158,22 @@ extension SimpleNetworking {
     }
 
     internal func createRequest(url: URL) -> URLRequest {
+        let settings = requestSettings()
         // Create a URL Request
         var request = URLRequest(url: url)
 
         // Add the user agent
         request.addValue(
-            self.userAgent,
+            settings.userAgent,
             forHTTPHeaderField: "User-Agent"
         )
 
-        headers?.forEach({ header in
+        settings.headers.forEach({ header in
             request.addValue(header.value, forHTTPHeaderField: header.name)
         })
 
         // Add the authentication token (if needed)
-        if let authToken = self.authToken {
+        if let authToken = settings.authorization {
             request.setValue(
                 "Bearer \(authToken)",
                 forHTTPHeaderField: "Authorization"

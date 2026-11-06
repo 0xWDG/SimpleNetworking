@@ -131,6 +131,96 @@ Task {
 }
 ```
 
+### Upload large files from disk
+
+`FileBackedMultipartUploadData` keeps the source file out of memory. Multipart framing is written to a temporary file in chunks, which `URLSession` uploads directly.
+
+```swift
+let file = try SimpleNetworking.FileBackedMultipartUploadData.File(
+    fileURL: URL(fileURLWithPath: "/path/to/video.mov"),
+    name: "video"
+)
+let upload = SimpleNetworking.FileBackedMultipartUploadData(
+    file: file,
+    parameters: ["title": "Launch video"]
+)
+
+let response = await networking.upload(
+    path: "/upload",
+    fileUploadData: upload
+) { progress in
+    print(progress.fractionCompleted ?? 0)
+}
+```
+
+### Isolated clients
+
+Use an immutable configuration to create clients that can be safely shared across concurrent tasks. Configuration updates are applied atomically, so an in-flight request always uses one consistent snapshot.
+
+```swift
+let networking = SimpleNetworking(configuration: .init(
+    serverURL: "https://api.example.com",
+    authorization: "access-token",
+    headers: [.init(name: "X-App-Version", value: "1.0")]
+))
+```
+
+### Per-request configuration
+
+Use `Request` when query items, headers, timeouts, or cache behavior are specific to one call. Request headers override the client defaults without mutating the client.
+
+```swift
+let request = SimpleNetworking.Request(
+    path: "/users",
+    method: .get,
+    query: ["page": "2"],
+    headers: [.init(name: "X-Request-ID", value: UUID().uuidString)],
+    timeout: 15,
+    cachePolicy: .reloadIgnoringLocalCacheData
+)
+
+let response = await networking.execute(request)
+```
+
+Custom methods and raw bodies are also supported:
+
+```swift
+let request = SimpleNetworking.Request(
+    path: "/documents",
+    method: "PROPFIND",
+    body: Data()
+)
+let response = await networking.execute(request)
+```
+
+### Transfers with progress
+
+Download directly to a file without retaining the downloaded content in memory:
+
+```swift
+let response = await networking.download(path: "/archive.zip", to: destinationURL) { progress in
+    print(progress.fractionCompleted ?? 0)
+}
+```
+
+Resume data from an interrupted `URLSession` download can also be used:
+
+```swift
+let response = await networking.download(resuming: resumeData, to: destinationURL)
+```
+
+For Swift concurrency code, consume progress as an `AsyncStream` while awaiting the final response:
+
+```swift
+let transfer = networking.uploadTransfer(path: "/upload", uploadData: uploadData)
+
+for await progress in transfer.progress {
+    print(progress.fractionCompleted ?? 0)
+}
+
+let response = await transfer.response.value
+```
+
 Upload a file from a file URL:
 
 ```swift
@@ -404,6 +494,18 @@ struct MyCodable: Codable {
 
 // Decode the response
 let data: MyCodable? = networkResponse.decoded()
+```
+
+Use `decode` when a decoding failure should be handled explicitly. It throws `NetworkingError`, which includes the failure kind, status, response headers, and a bounded body snippet.
+
+```swift
+do {
+    let data: MyCodable = try networkResponse.decode()
+} catch let error as SimpleNetworking.NetworkingError {
+    print(error.kind)
+    print(error.statusCode ?? 0)
+    print(error.bodySnippet ?? "")
+}
 ```
 
 #### Codable, decoding strategy = convertFromSnakeCase

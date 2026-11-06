@@ -20,6 +20,7 @@ extension SimpleNetworking {
             return siteURL
         }
 
+        let serverURL = withStateLock { self.serverURL }
         if let siteURL = URL(string: serverURL + urlInput) {
             return siteURL
         }

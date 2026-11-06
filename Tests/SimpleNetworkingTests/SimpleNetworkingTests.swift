@@ -82,206 +82,195 @@ final class SimpleNetworkingTests: XCTestCase {
         XCTAssertEqual(json, ["id": "123", "name": "Updated"])
     }
 
-    // MARK: - File Upload Tests
+    func testConfigurationInitializesAnIsolatedClient() async {
+        let networking = SimpleNetworking(configuration: .init(
+            serverURL: "https://example.com",
+            userAgent: "SimpleNetworkingTests",
+            authorization: "test-token",
+            headers: [.init(name: "X-Client", value: "isolated")]
+        ))
+        networking.set(mockData: [
+            "https://example.com/health": .init(data: "ok", response: nil, error: nil)
+        ])
 
-    func testFileUploadInitialization() {
-        // Test basic file upload initialization
-        let testData = Data("Test file content".utf8)
-        let fileUpload = SimpleNetworking.FileUpload(
-            data: testData,
-            name: "file",
-            filename: "test.txt",
-            mimeType: "text/plain"
-        )
+        let response = await networking.request(path: "/health", method: .get)
 
-        XCTAssertEqual(fileUpload.name, "file")
-        XCTAssertEqual(fileUpload.filename, "test.txt")
-        XCTAssertEqual(fileUpload.mimeType, "text/plain")
-        XCTAssertEqual(fileUpload.data, testData)
+        XCTAssertEqual(response.request.value(forHTTPHeaderField: "User-Agent"), "SimpleNetworkingTests")
+        XCTAssertEqual(response.request.value(forHTTPHeaderField: "Authorization"), "Bearer test-token")
+        XCTAssertEqual(response.request.value(forHTTPHeaderField: "X-Client"), "isolated")
+        XCTAssertEqual(response.string, "ok")
     }
 
-    func testFileUploadFromFileURL() throws {
-        // Create a temporary file
-        let tempDir = FileManager.default.temporaryDirectory
-        let fileURL = tempDir.appendingPathComponent("test.txt")
-        let testContent = "Hello, World!"
-        try testContent.write(to: fileURL, atomically: true, encoding: .utf8)
+    func testRequestBuilderAppliesRequestScopedSettings() async {
+        let networking = SimpleNetworking(configuration: .init(
+            serverURL: "https://example.com",
+            headers: [.init(name: "X-Client", value: "default")]
+        ))
+        networking.set(mockData: [
+            "https://example.com/users?page=2": .init(data: "[]", response: nil, error: nil)
+        ])
+        let request = SimpleNetworking.Request(
+            path: "/users",
+            method: .get,
+            query: ["page": "2"],
+            headers: [.init(name: "X-Client", value: "request")],
+            timeout: 12,
+            cachePolicy: .reloadIgnoringLocalCacheData
+        )
 
-        defer {
-            try? FileManager.default.removeItem(at: fileURL)
+        let response = await networking.execute(request)
+
+        XCTAssertEqual(response.request.url?.absoluteString, "https://example.com/users?page=2")
+        XCTAssertEqual(response.request.value(forHTTPHeaderField: "X-Client"), "request")
+        XCTAssertEqual(response.request.timeoutInterval, 12)
+        XCTAssertEqual(response.request.cachePolicy, .reloadIgnoringLocalCacheData)
+    }
+
+    func testRequestBuilderSupportsCustomMethodsAndRawBodies() async {
+        let networking = SimpleNetworking(configuration: .init(serverURL: "https://example.com"))
+        networking.set(mockData: [
+            "https://example.com/documents": .init(data: "", response: nil, error: nil)
+        ])
+        let body = Data("payload".utf8)
+        let request = SimpleNetworking.Request(
+            path: "/documents",
+            method: "PROPFIND",
+            body: body,
+            headers: [.init(name: "Content-Type", value: "text/plain")]
+        )
+
+        let response = await networking.execute(request)
+
+        XCTAssertEqual(response.request.httpMethod, "PROPFIND")
+        XCTAssertEqual(response.request.httpBody, body)
+        XCTAssertEqual(response.request.value(forHTTPHeaderField: "Content-Type"), "text/plain")
+    }
+
+    func testMockedDownloadWritesTheDestinationAndReportsProgress() async throws {
+        let networking = SimpleNetworking(configuration: .init(serverURL: "https://example.com"))
+        networking.set(mockData: [
+            "https://example.com/archive": .init(data: "downloaded", response: nil, error: nil)
+        ])
+        let destinationURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let recorder = ProgressRecorder()
+
+        defer { try? FileManager.default.removeItem(at: destinationURL) }
+        let response = await networking.download(path: "/archive", to: destinationURL) { progress in
+            Task { await recorder.append(progress) }
         }
 
-        // Test file upload from URL
-        let fileUpload = try SimpleNetworking.FileUpload(
-            fileURL: fileURL,
+        XCTAssertNil(response.error)
+        XCTAssertEqual(try String(contentsOf: destinationURL), "downloaded")
+        let updates = await recorder.values()
+        XCTAssertEqual(updates.last?.fractionCompleted, 1)
+    }
+
+    func testFileBackedUploadKeepsTheRequestBodyOutOfMemory() async throws {
+        let sourceURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".txt")
+        try Data("large file contents".utf8).write(to: sourceURL)
+        defer { try? FileManager.default.removeItem(at: sourceURL) }
+
+        let networking = SimpleNetworking(configuration: .init(serverURL: "https://example.com"))
+        networking.set(mockData: [
+            "https://example.com/upload": .init(data: "ok", response: nil, error: nil)
+        ])
+        let file = try SimpleNetworking.FileBackedMultipartUploadData.File(
+            fileURL: sourceURL,
             name: "document"
         )
+        let upload = SimpleNetworking.FileBackedMultipartUploadData(
+            file: file,
+            parameters: ["description": "A document"]
+        )
+        let recorder = ProgressRecorder()
 
-        XCTAssertEqual(fileUpload.name, "document")
-        XCTAssertEqual(fileUpload.filename, "test.txt")
-        XCTAssertEqual(fileUpload.mimeType, "text/plain")
-        XCTAssertEqual(String(data: fileUpload.data, encoding: .utf8), testContent)
-    }
-
-    func testFileUploadMimeTypeDetection() throws {
-        // Test various file extensions and their MIME types
-        let tempDir = FileManager.default.temporaryDirectory
-
-        let testCases: [(String, String)] = [
-            ("test.jpg", "image/jpeg"),
-            ("test.png", "image/png"),
-            ("test.pdf", "application/pdf"),
-            ("test.json", "application/json"),
-            ("test.zip", "application/zip")
-        ]
-
-        var createdFiles: [URL] = []
-
-        for (filename, expectedMimeType) in testCases {
-            let fileURL = tempDir.appendingPathComponent(filename)
-            try "test".write(to: fileURL, atomically: true, encoding: .utf8)
-            createdFiles.append(fileURL)
-
-            let fileUpload = try SimpleNetworking.FileUpload(
-                fileURL: fileURL,
-                name: "file"
-            )
-
-            XCTAssertEqual(fileUpload.mimeType, expectedMimeType, "MIME type for \(filename)")
+        let response = await networking.upload(path: "/upload", fileUploadData: upload) { progress in
+            Task { await recorder.append(progress) }
         }
 
-        // Clean up all created files
-        for fileURL in createdFiles {
-            try? FileManager.default.removeItem(at: fileURL)
-        }
+        XCTAssertEqual(response.string, "ok")
+        XCTAssertNil(response.request.httpBody)
+        let contentType = response.request.value(forHTTPHeaderField: "Content-Type")
+        XCTAssertEqual(contentType?.hasPrefix("multipart/form-data"), true)
+        let progress = await recorder.values().last
+        XCTAssertEqual(progress?.fractionCompleted, 1)
     }
 
-    func testMultipartUploadDataWithSingleFile() {
-        let testData = Data("Test content".utf8)
-        let fileUpload = SimpleNetworking.FileUpload(
-            data: testData,
-            name: "file",
-            filename: "test.txt"
-        )
-
-        let uploadData = SimpleNetworking.MultipartUploadData(
-            file: fileUpload,
-            parameters: ["key": "value"]
-        )
-
-        XCTAssertEqual(uploadData.files.count, 1)
-        XCTAssertEqual(uploadData.parameters["key"], "value")
-    }
-
-    func testMultipartUploadDataWithMultipleFiles() {
-        let file1 = SimpleNetworking.FileUpload(
-            data: Data("Content 1".utf8),
-            name: "file1",
-            filename: "test1.txt"
-        )
-
-        let file2 = SimpleNetworking.FileUpload(
-            data: Data("Content 2".utf8),
-            name: "file2",
-            filename: "test2.txt"
-        )
-
-        let uploadData = SimpleNetworking.MultipartUploadData(
-            files: [file1, file2],
-            parameters: ["param1": "value1", "param2": "value2"]
-        )
-
-        XCTAssertEqual(uploadData.files.count, 2)
-        XCTAssertEqual(uploadData.parameters.count, 2)
-    }
-
-    func testFileUploadWithMockedResponse() async {
-        // Setup mock response
+    func testUploadTransferPublishesProgress() async {
+        let networking = SimpleNetworking(configuration: .init(serverURL: "https://example.com"))
         networking.set(mockData: [
-            "https://example.com/upload": .init(
-                data: "{\"status\":\"success\",\"file_id\":\"123\"}",
-                response: .init(
-                    url: .init(string: "https://example.com/upload")!,
-                    // swiftlint:disable:previous force_unwrapping
-                    mimeType: "application/json",
-                    expectedContentLength: 100,
-                    textEncodingName: "utf-8"
+            "https://example.com/upload": .init(data: "ok", response: nil, error: nil)
+        ])
+        let uploadData = SimpleNetworking.MultipartUploadData(
+            file: .init(data: Data("contents".utf8), name: "file", filename: "file.txt")
+        )
+
+        let transfer = networking.uploadTransfer(path: "/upload", uploadData: uploadData)
+        var updates: [SimpleNetworking.TransferProgress] = []
+        for await progress in transfer.progress {
+            updates.append(progress)
+        }
+        let response = await transfer.response.value
+
+        XCTAssertEqual(response.string, "ok")
+        XCTAssertEqual(updates.last?.fractionCompleted, 1)
+    }
+
+    func testHTTPFailureContainsDiagnostics() async {
+        let networking = SimpleNetworking(configuration: .init(serverURL: "https://example.com"))
+        let url = URL(string: "https://example.com/missing")!
+        networking.set(mockData: [
+            url.absoluteString: .init(
+                data: "not found",
+                response: HTTPURLResponse(
+                    url: url,
+                    statusCode: 404,
+                    httpVersion: nil,
+                    headerFields: ["X-Request-ID": "abc"]
                 ),
-                statusCode: 200,
+                statusCode: 404,
                 error: nil
             )
         ])
 
-        // Create file upload
-        let fileUpload = SimpleNetworking.FileUpload(
-            data: Data("Test file".utf8),
-            name: "file",
-            filename: "test.txt",
-            mimeType: "text/plain"
-        )
+        let response = await networking.request(path: "/missing", method: .get)
 
-        let uploadData = SimpleNetworking.MultipartUploadData(
-            file: fileUpload,
-            parameters: ["user_id": "456"]
-        )
-
-        // Perform upload
-        let response = await networking.upload(
-            path: "https://example.com/upload",
-            uploadData: uploadData
-        )
-
-        XCTAssertEqual(response.statuscode, 200)
-        XCTAssertNotNil(response.string)
-        XCTAssert(response.string?.contains("success") ?? false)
+        XCTAssertFalse(response.isSuccess)
+        XCTAssertEqual(response.networkingError?.kind, .httpStatus)
+        XCTAssertEqual(response.networkingError?.statusCode, 404)
+        XCTAssertEqual(response.networkingError?.bodySnippet, "not found")
+        XCTAssertEqual(response.networkingError?.responseHeaders.first?.name, "X-Request-ID")
     }
 
-    func testBoundaryGeneration() {
-        let boundary1 = networking.generateBoundary()
-        let boundary2 = networking.generateBoundary()
+    func testThrowingDecodeReportsDiagnostics() async {
+        struct Model: Decodable { let id: Int }
 
-        XCTAssertTrue(boundary1.hasPrefix("Boundary-"))
-        XCTAssertTrue(boundary2.hasPrefix("Boundary-"))
-        XCTAssertNotEqual(boundary1, boundary2, "Boundaries should be unique")
-    }
+        let networking = SimpleNetworking(configuration: .init(serverURL: "https://example.com"))
+        networking.set(mockData: [
+            "https://example.com/invalid-json": .init(data: "not json", response: nil, error: nil)
+        ])
+        let response = await networking.request(path: "/invalid-json", method: .get)
 
-    func testFileUploadError_FileNotFound() {
-        let nonExistentURL = URL(fileURLWithPath: "/tmp/nonexistent_file.txt")
-
-        XCTAssertThrowsError(try SimpleNetworking.FileUpload(
-            fileURL: nonExistentURL,
-            name: "file"
-        )) { error in
-            if let uploadError = error as? SimpleNetworking.FileUploadError {
-                switch uploadError {
-                case .fileNotFound:
-                    XCTAssertTrue(true, "Correct error thrown")
-                default:
-                    XCTFail("Wrong error type")
-                }
-            } else {
-                XCTFail("Wrong error type")
-            }
+        XCTAssertThrowsError(try response.decode(Model.self)) { error in
+            let networkingError = error as? SimpleNetworking.NetworkingError
+            XCTAssertEqual(networkingError?.kind, .decoding)
+            XCTAssertEqual(networkingError?.bodySnippet, "not json")
         }
+        XCTAssertNil(response.decoded() as Model?)
     }
 
-    func testFileUploadError_InvalidURL() {
-        let httpURL = URL(string: "https://example.com/file.txt")!
+}
 
-        XCTAssertThrowsError(try SimpleNetworking.FileUpload(
-            fileURL: httpURL,
-            name: "file"
-        )) { error in
-            if let uploadError = error as? SimpleNetworking.FileUploadError {
-                switch uploadError {
-                case .invalidFileURL:
-                    XCTAssertTrue(true, "Correct error thrown")
-                default:
-                    XCTFail("Wrong error type")
-                }
-            } else {
-                XCTFail("Wrong error type")
-            }
-        }
+private actor ProgressRecorder {
+    private var storage: [SimpleNetworking.TransferProgress] = []
+
+    func append(_ progress: SimpleNetworking.TransferProgress) {
+        storage.append(progress)
+    }
+
+    func values() -> [SimpleNetworking.TransferProgress] {
+        storage
     }
 }

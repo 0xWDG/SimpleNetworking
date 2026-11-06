@@ -32,10 +32,10 @@ extension SimpleNetworking {
             addStoredCookies(to: &preparedRequest)
 
             if let url = preparedRequest.url,
-               let mock = mockData[url.absoluteString] {
+               let mock = requestSettings().mocks[url.absoluteString] {
                 let data = mock.data ?? .init()
 
-                return .init(
+                var result = NetworkResponse(
                     response: mock.response,
                     statuscode: mock.statusCode,
                     error: mock.error,
@@ -45,6 +45,8 @@ extension SimpleNetworking {
                     cookies: nil,
                     request: preparedRequest
                 )
+                result.normalizeError()
+                return result
             }
 
             #if canImport(FoundationNetworking)
@@ -59,7 +61,7 @@ extension SimpleNetworking {
                 return .init(error: error, request: request)
             }
             #else
-            guard let session = session else {
+            guard let session = requestSettings().session else {
                 return .init(
                     error: NetworkingError(message: "No URLSession available"),
                     request: preparedRequest
@@ -84,7 +86,7 @@ extension SimpleNetworking {
                     httpCode = httpResponse.statusCode
                 }
 
-                return .init(
+                var result = NetworkResponse(
                     response: response,
                     statuscode: httpCode,
                     error: nil,
@@ -94,8 +96,10 @@ extension SimpleNetworking {
                     cookies: responseCookies,
                     request: preparedRequest
                 )
+                result.normalizeError()
+                return result
             } catch {
-                return .init(error: error, request: preparedRequest)
+                return .init(error: NetworkingError.transport(error), request: preparedRequest)
             }
             #endif
         }
@@ -117,28 +121,21 @@ extension SimpleNetworking {
             addStoredCookies(to: &preparedRequest)
             let request = preparedRequest
 
-            if let url = request.url,
-               let mock = mockData[url.absoluteString] {
-                let data = mock.data ?? .init()
-
-                completionHandler(.init(
-                    response: mock.response,
-                    statuscode: mock.statusCode,
-                    error: mock.error,
-                    data: mock.data,
-                    string: String(data: data, encoding: .utf8),
-                    dictionary: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                    cookies: nil,
-                    request: request
-                ))
+            if let mockedResponse = mockedResponse(for: request) {
+                completionHandler(mockedResponse)
+                return
             }
 
             DispatchQueue.global(qos: .userInitiated).async {
                 // Start our datatask
-                self.session?.dataTask(with: request) { [self] (siteData, response, taskError) in
+                let session = self.requestSettings().session
+                session?.dataTask(with: request) { [self] (siteData, response, taskError) in
                     // Check if we got any useable site data
                     guard let siteData = siteData else {
-                        completionHandler(.init(error: taskError, request: request))
+                        completionHandler(.init(
+                            error: taskError.map(NetworkingError.transport),
+                            request: request
+                        ))
                         return
                     }
 
@@ -157,7 +154,7 @@ extension SimpleNetworking {
                         httpCode = httpResponse.statusCode
                     }
 
-                    completionHandler(.init(
+                    var result = NetworkResponse(
                         response: response,
                         statuscode: httpCode,
                         error: taskError,
@@ -166,8 +163,32 @@ extension SimpleNetworking {
                         dictionary: try? JSONSerialization.jsonObject(with: siteData, options: []) as? [String: Any],
                         cookies: responseCookies,
                         request: request
-                    ))
+                    )
+                    result.normalizeError()
+                    completionHandler(result)
                 }.resume()
             }
         }
+
+    /// Builds a response for a configured mock without starting a URL session.
+    private func mockedResponse(for request: URLRequest) -> NetworkResponse? {
+        guard let url = request.url,
+              let mock = requestSettings().mocks[url.absoluteString] else {
+            return nil
+        }
+
+        let data = mock.data ?? .init()
+        var result = NetworkResponse(
+            response: mock.response,
+            statuscode: mock.statusCode,
+            error: mock.error,
+            data: mock.data,
+            string: String(data: data, encoding: .utf8),
+            dictionary: try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+            cookies: nil,
+            request: request
+        )
+        result.normalizeError()
+        return result
+    }
 }

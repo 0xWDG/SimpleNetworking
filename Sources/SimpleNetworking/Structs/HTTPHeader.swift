@@ -12,7 +12,7 @@ import Foundation
 
 extension SimpleNetworking {
     /// HTTP Header
-    public struct HTTPHeader: Identifiable, Hashable, Equatable {
+    public struct HTTPHeader: Identifiable, Hashable, Equatable, Sendable {
         /// Identifier
         public let id = UUID()
 

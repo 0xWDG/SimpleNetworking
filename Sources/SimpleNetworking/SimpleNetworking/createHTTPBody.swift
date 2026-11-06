@@ -164,7 +164,7 @@ extension SimpleNetworking {
     /// Sanitize header values to prevent multipart corruption
     /// - Parameter value: The value to sanitize
     /// - Returns: Sanitized value safe for use in headers
-    private func sanitizeHeaderValue(_ value: String) -> String {
+    internal func sanitizeHeaderValue(_ value: String) -> String {
         // Replace quotes and control characters that could break multipart format
         return value
             .replacingOccurrences(of: "\"", with: "\\\"")

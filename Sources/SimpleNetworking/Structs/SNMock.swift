@@ -21,7 +21,7 @@ public struct SNMock {
     public let response: URLResponse?
 
     /// Mocked HTTP Response status code
-    public let statusCode: Int? = 200
+    public let statusCode: Int?
 
     /// Mocked Error (if any)
     public let error: Error?
@@ -35,6 +35,7 @@ public struct SNMock {
     public init(data: Data?, response: URLResponse?, statusCode: Int? = 200, error: Error?) {
         self.data = data
         self.response = response
+        self.statusCode = statusCode
         self.error = error
     }
 
@@ -47,6 +48,7 @@ public struct SNMock {
     public init(data: String?, response: URLResponse?, statusCode: Int? = 200, error: Error?) {
         self.data = data?.data(using: .utf8)
         self.response = response
+        self.statusCode = statusCode
         self.error = error
     }
 }

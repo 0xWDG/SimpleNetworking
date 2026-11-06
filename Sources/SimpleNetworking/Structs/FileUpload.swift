@@ -12,8 +12,38 @@
 import Foundation
 
 extension SimpleNetworking {
+    /// A file retained on disk for a multipart transfer.
+    public struct FileBackedUploadFile: Sendable {
+        /// URL of the local file, which must exist when the value is created.
+        public let fileURL: URL
+        /// Multipart form field name.
+        public let name: String
+        /// Filename sent in the multipart content disposition.
+        public let filename: String
+        /// MIME type sent for this part.
+        public let mimeType: String
+
+        /// Create a file-backed multipart part after validating its source URL.
+        public init(
+            fileURL: URL,
+            name: String,
+            filename: String? = nil,
+            mimeType: String? = nil
+        ) throws {
+            guard fileURL.isFileURL else { throw FileUploadError.invalidFileURL }
+            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+                throw FileUploadError.fileNotFound(path: fileURL.path)
+            }
+
+            self.fileURL = fileURL
+            self.name = name
+            self.filename = filename ?? fileURL.lastPathComponent
+            self.mimeType = mimeType ?? FileUpload.mimeType(for: fileURL)
+        }
+    }
+
     /// Represents multipart upload data (files and form parameters)
-    public struct MultipartUploadData {
+    public struct MultipartUploadData: Sendable {
         /// Files to upload
         public let files: [FileUpload]
 
@@ -39,8 +69,27 @@ extension SimpleNetworking {
         }
     }
 
+    /// Multipart form data whose files remain on disk until the transfer starts.
+    public struct FileBackedMultipartUploadData: Sendable {
+        // Preserve the established public spelling `FileBackedMultipartUploadData.File`.
+        // swiftlint:disable:next nesting
+        public typealias File = FileBackedUploadFile
+
+        public let files: [File]
+        public let parameters: [String: String]
+
+        public init(files: [File], parameters: [String: String] = [:]) {
+            self.files = files
+            self.parameters = parameters
+        }
+
+        public init(file: File, parameters: [String: String] = [:]) {
+            self.init(files: [file], parameters: parameters)
+        }
+    }
+
     /// Represents a file to be uploaded
-    public struct FileUpload {
+    public struct FileUpload: Sendable {
         /// The file data
         public let data: Data
 
@@ -96,7 +145,7 @@ extension SimpleNetworking {
         /// Detect MIME type based on file extension
         /// - Parameter url: The file URL
         /// - Returns: The detected MIME type
-        private static func mimeType(for url: URL) -> String {
+        internal static func mimeType(for url: URL) -> String {
             let ext = url.pathExtension.lowercased()
 
             let mimeTypes: [String: String] = [

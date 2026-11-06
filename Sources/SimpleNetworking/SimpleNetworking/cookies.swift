@@ -17,16 +17,11 @@ import FoundationNetworking
 
 extension SimpleNetworking {
     internal func cookieSnapshot() -> [HTTPCookie] {
-        stateLock.lock()
-        defer { stateLock.unlock() }
-
-        return cookies ?? []
+        withStateLock { cookieStorage ?? [] }
     }
 
     internal func addStoredCookies(to request: inout URLRequest) {
-        stateLock.lock()
-        let storedCookies = cookies ?? []
-        stateLock.unlock()
+        let storedCookies = withStateLock { cookieStorage ?? [] }
 
         guard !storedCookies.isEmpty,
               let cookieHeader = HTTPCookie.requestHeaderFields(with: storedCookies)["Cookie"] else {
@@ -55,20 +50,23 @@ extension SimpleNetworking {
             return
         }
 
-        stateLock.lock()
-        for cookie in responseCookies {
-            cookies?.removeAll { $0.name == cookie.name && $0.domain == cookie.domain && $0.path == cookie.path }
-            cookies?.append(cookie)
+        withStateLock {
+            for cookie in responseCookies {
+                cookieStorage?.removeAll { $0.name == cookie.name }
+                cookieStorage?.append(cookie)
+            }
         }
-        stateLock.unlock()
     }
 
-    /// Create and add a cookie to the storage
+    /// Create or replace the cookie stored under `name`.
+    ///
+    /// The storage keeps one cookie per name. Adding another cookie with the same name replaces its value,
+    /// domain, and path so stale credentials are not sent alongside the replacement.
     /// - Parameters:
-    ///   - domain: cookie domain
-    ///   - path: cookie path
-    ///   - name: cookie name
-    ///   - value: cookie value
+    ///   - domain: Domain to which the cookie applies.
+    ///   - path: URL path to which the cookie applies.
+    ///   - name: Stable key used to find and replace an existing cookie.
+    ///   - value: New cookie value.
     @discardableResult public func cookie(domain: String, path: String, name: String, value: String) -> Bool {
         if let cookie = HTTPCookie(properties: [
             .domain: domain,
@@ -76,9 +74,10 @@ extension SimpleNetworking {
             .name: name,
             .value: value
         ]) {
-            stateLock.lock()
-            cookies?.append(cookie)
-            stateLock.unlock()
+            withStateLock {
+                cookieStorage?.removeAll { $0.name == cookie.name }
+                cookieStorage?.append(cookie)
+            }
             return true
         } else {
             return false
@@ -92,37 +91,30 @@ extension SimpleNetworking {
     ///   - name: cookie name
     ///   - value: cookie value
     public func cookie(deleteCookieWithDomain: String?, path: String?, name: String?, value: String?) {
-        var newCookieStorage: [HTTPCookie] = []
+        withStateLock {
+            guard let unwrapped = cookieStorage else {
+                return
+            }
 
-        stateLock.lock()
-        defer { stateLock.unlock() }
-
-        guard let unwrapped = cookies else {
-            return
+            cookieStorage = unwrapped.filter { cookie in
+                ![
+                    cookie.domain == deleteCookieWithDomain,
+                    cookie.path == path,
+                    cookie.name == name,
+                    cookie.value == value
+                ].contains(true)
+            }
         }
-
-        for cookie in unwrapped where ![
-        cookie.domain == deleteCookieWithDomain,
-        cookie.path == path,
-        cookie.name == name,
-        cookie.value == value
-        ].contains(true) {
-            newCookieStorage.append(cookie)
-        }
-
-        cookies = newCookieStorage
     }
 
     /// Reset cookie storage
     /// - Parameter reset: reset
     public func cookie(reset: Bool) {
         if reset {
-            stateLock.lock()
-            defer { stateLock.unlock() }
-
-            cookies?.removeAll()
-
-            assert((cookies ?? []).isEmpty, "Failed to reset cookie storage.")
+            withStateLock {
+                cookieStorage?.removeAll()
+                assert((cookieStorage ?? []).isEmpty, "Failed to reset cookie storage.")
+            }
         }
     }
 }
