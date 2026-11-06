@@ -10,6 +10,10 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 extension SimpleNetworking {
     /// An immutable description of one HTTP request.
     public struct Request {
