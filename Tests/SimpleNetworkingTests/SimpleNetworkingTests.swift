@@ -14,12 +14,17 @@ final class SimpleNetworkingTests: XCTestCase {
     }
 
     func testSimpleHTTPCall() async {
-         let response = await networking.request(
-            path: "/sitemap.xml",
-            method: .get
-        )
+        networking.set(mockData: [
+            "https://wesleydegroot.nl/sitemap.xml": .init(
+                data: "schemas/sitemap",
+                response: nil,
+                error: nil
+            )
+        ])
 
-        XCTAssert(response.string?.contains("schemas/sitemap") ?? false)
+        let response = await networking.request(path: "/sitemap.xml", method: .get)
+
+        XCTAssertEqual(response.string, "schemas/sitemap")
     }
 
     func testSimpleMockedHTTPCall() async {
