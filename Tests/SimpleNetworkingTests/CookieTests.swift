@@ -1,4 +1,8 @@
 import Foundation
+
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import SimpleNetworking
 import XCTest
 
