@@ -13,6 +13,13 @@ final class PropertyWrapperTests: XCTestCase {
     // MARK: - @Get Tests
 
     func testGetPropertyWrapper() async {
+        networking.set(mockData: [
+            "https://wesleydegroot.nl/sitemap.xml": .init(
+                data: "schemas/sitemap",
+                response: nil,
+                error: nil
+            )
+        ])
         let getWrapper = SimpleNetworking.Get("/sitemap.xml")
         let response = await getWrapper.execute()
 
@@ -294,6 +301,14 @@ final class PropertyWrapperTests: XCTestCase {
     // MARK: - Actual Property Wrapper Syntax Tests (@)
 
     func testGetPropertyWrapperWithAtSyntaxInClass() async {
+        networking.set(mockData: [
+            "https://wesleydegroot.nl/sitemap.xml": .init(
+                data: "schemas/sitemap",
+                response: nil,
+                error: nil
+            )
+        ])
+
         class TestService {
             @SimpleNetworking.Get("/sitemap.xml")
             var sitemap: SimpleNetworking.NetworkResponse?
